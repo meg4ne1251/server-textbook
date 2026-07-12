@@ -10,9 +10,9 @@
 
 ## 現在の状態
 
-- 完了ステップ: Step 0
-- 次のステップ: Step 1 `00_overview/01_roadmap.md`
-  (教科書全体のロードマップ・前提知識マップ)から着手する
+- 完了ステップ: Step 0, Step 1
+- 次のステップ: Step 2 `01_intro/01_server_os_kernel_overview.md`
+  (サーバー/OS/カーネルとは何か、全体像)から着手する
 
 ---
 
@@ -42,3 +42,18 @@
   ファイルパス(sched-eevdf.rst)は基準版で要確認。基準ディストリビューションも
   Step 1 で決定する。
 - 次のステップ: Step 1 `00_overview/01_roadmap.md`
+
+## Step 1: `00_overview/01_roadmap.md` (完了日: 2026-07-13)
+
+- 完了内容: 教科書全体のロードマップを作成。10分野の一覧表、分野間の依存関係を
+  示す前提知識マップ(Mermaid)、各分野の到達目標、学習パス3種(通読/運用急ぎ/
+  コンテナ目的)、network-guide との役割分担を記述。
+- 決定事項: (1) 基準カーネルは Linux 7.0(7.x系)、基準ディストロは
+  Ubuntu Server 26.04 LTS と確定。(2) ロードマップでは用語を「予告」するに
+  とどめ、glossary.md への正式登録は各用語を本文で初めて定義する章
+  (主に 01_intro 以降)で行う。(3) 分野04は network-guide との橋渡しで、
+  プロトコル詳細は network-guide 側が主。
+- 未解決・要検証事項: Linux 7.0 が執筆時点の実在の最新安定版かは要検証
+  (本文にも要検証注記済み)。Ubuntu 26.04 LTS の同梱カーネル版も要確認。
+  EEVDF のカーネルドキュメントパス(sched-eevdf.rst)は Step 9 執筆時に確認する。
+- 次のステップ: Step 2 `01_intro/01_server_os_kernel_overview.md`
