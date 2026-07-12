@@ -10,9 +10,9 @@
 
 ## 現在の状態
 
-- 完了ステップ: なし(CLAUDE.md / README.md による設計フェーズのみ完了)
-- 次のステップ: Step 0 `shared/glossary.md`, `shared/style_guide.md` の
-  ひな形作成から着手する
+- 完了ステップ: Step 0
+- 次のステップ: Step 1 `00_overview/01_roadmap.md`
+  (教科書全体のロードマップ・前提知識マップ)から着手する
 
 ---
 
@@ -28,3 +28,17 @@
 - 未解決・要検証事項:
 - 次のステップ: Step N+1 <次のファイルパス>
 -->
+
+## Step 0: `shared/glossary.md`, `shared/style_guide.md` (完了日: 2026-07-13)
+
+- 完了内容: 両ファイルのひな形を確定。glossary.md は五十音順/A〜Zセクション構成の
+  空テンプレート、style_guide.md は章構成テンプレート・表記ルール(一次情報源の
+  参照方法、英語用語、数値・単位、図解、network-guide 相互参照)を定義。
+- 決定事項: style_guide.md の一次情報源の文例を CLAUDE.md「前提バージョンの固定」
+  (Linux 7.x 基準、EEVDF標準)に合わせて更新。旧実装は「6.6以前のCFS」のように
+  版を添えて対比の文脈で扱うルールを 2.1.1 として明文化。
+- 未解決・要検証事項: 基準カーネルの具体版(7.x のどれか)は Step 1 の
+  `00_overview/01_roadmap.md` で確定する。EEVDF のカーネルドキュメントの正確な
+  ファイルパス(sched-eevdf.rst)は基準版で要確認。基準ディストリビューションも
+  Step 1 で決定する。
+- 次のステップ: Step 1 `00_overview/01_roadmap.md`
