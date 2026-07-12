@@ -10,9 +10,9 @@
 
 ## 現在の状態
 
-- 完了ステップ: Step 0〜2
-- 次のステップ: Step 3 `01_intro/02_shell_and_commands.md`
-  (シェルとコマンドの仕組み、標準入出力/パイプ)から着手する
+- 完了ステップ: Step 0〜3
+- 次のステップ: Step 4 `01_intro/03_filesystem_hierarchy_permissions.md`
+  (ファイル階層(FHS)とパーミッションの基礎)から着手する
 
 ---
 
@@ -74,3 +74,22 @@
   vmlinuz サイズは Ubuntu 26.04 実機での要検証。x86-64 の特権レベルを
   「ring 0〜3」と簡略に述べた箇所は Step 7(syscall章)で正確に展開する。
 - 次のステップ: Step 3 `01_intro/02_shell_and_commands.md`
+
+## Step 3: `01_intro/02_shell_and_commands.md` (完了日: 2026-07-13)
+
+- 完了内容: シェルの本質を「読む→解釈(展開)→起動(fork/exec)→待つ(wait)」の
+  ループとして説明。展開・PATH探索・リダイレクト解釈は「コマンド起動前にシェルが
+  行う」原則を軸に、fdテーブル、fork後exec前のリダイレクト処理、パイプの
+  カーネル内バッファと流量制御、終了ステータスまでを扱った。
+- 決定事項: (1) glossary へ登録: PATH、外部コマンド、環境変数、グロブ、
+  終了ステータス、端末、パイプ、標準入出力、ビルトインコマンド、
+  ファイルディスクリプタ、リダイレクト。標準表記は「ビルトインコマンド」
+  「グロブ」に統一。(2) fork/exec/wait はこの章では「3点セットの依頼」として
+  導入にとどめ、正式な内部動作は Step 6(02_process_kernel/01)に委ねる。
+  (3) style_guide.md 実例ログにコンソール表記(```console、$ プロンプト、
+  ← 注釈)を明文化。
+- 未解決・要検証事項: パイプバッファの既定容量を「64 KiB(man 7 pipe)」と
+  記載——Linux 7.x 基準版での既定値・F_SETPIPE_SZ まわりは Step 10(IPC章)で
+  再確認する。bash 既定 PATH の実際の値は Ubuntu 26.04 実機で要検証。
+  端末(TTY/PTY)の内部機構は本章では扱わず、必要になった時点で扱う章を決める。
+- 次のステップ: Step 4 `01_intro/03_filesystem_hierarchy_permissions.md`
