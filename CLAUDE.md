@@ -46,14 +46,23 @@
 
 ## 教科書の範囲(章立て大分類)
 
+0. **サーバー・Linux入門**(前提知識ゼロの入り口) — サーバー/OS/カーネルの全体像、
+   シェルとコマンドの仕組み、ファイル階層(FHS)とパーミッションの基礎、パッケージ管理
 1. **プロセス・カーネル基礎** — プロセス/スレッド、システムコール、仮想メモリ、スケジューラ
 2. **ファイルシステム・ストレージ** — VFS、ジャーナリング、inode、LVM/RAID、ネットワークストレージ
 3. **Linuxネットワークスタック内部** — ソケットAPI、netfilter/nftables、ネットワークネームスペース、tc/qdisc
    (`network-guide` との橋渡し分野)
 4. **仮想化・コンテナ基盤** — cgroups/namespaces、KVM/QEMU、コンテナランタイム
 5. **systemd・サービス管理** — Unit依存関係解決、cgroup連携、journald
-6. **高可用性・クラスタリング** — クラスタリングの基本概念、Pacemaker/Corosync、ロードバランシング/レプリケーション
-7. **可観測性** — syslog、メトリクス/ログ/トレース、Prometheusのpull型設計思想
+6. **運用・セキュリティ**(実運用の基礎) — ユーザー/権限/認証の運用、SSH、
+   パッケージ/更新管理とバックアップ、ファイアウォールと基本的な堅牢化
+7. **高可用性・クラスタリング** — クラスタリングの基本概念、Pacemaker/Corosync、ロードバランシング/レプリケーション
+8. **可観測性** — syslog、メトリクス/ログ/トレース、Prometheusのpull型設計思想
+
+大分類0(入門)は前提知識ゼロで読める土台とし、以降の内部原理の章はここで導入した
+語彙・全体像の上に積み上げる。大分類6(運用・セキュリティ)は、それまでに学んだ
+仕組み(ネットワークスタック・systemd等)を実際のサーバー運用にどう使うかを扱う
+応用寄りの分野で、内部原理の章と相互参照する。
 
 各分類は独立したディレクトリを持ち、その中で「触ったことはあるが原理は知らないレベル」→
 「理論(カーネル文書・仕様書ベース)」→「応用」→「実装例」の順に章を分割する。
@@ -67,36 +76,46 @@ server_textbook/
 ├── CLAUDE.md
 ├── 00_overview/
 │   └── 01_roadmap.md                      # 教科書全体のロードマップ・前提知識マップ
-├── 01_process_kernel/
+├── 01_intro/
+│   ├── 01_server_os_kernel_overview.md    # サーバー/OS/カーネルとは何か、全体像
+│   ├── 02_shell_and_commands.md           # シェルとコマンドの仕組み、標準入出力/パイプ
+│   ├── 03_filesystem_hierarchy_permissions.md # ファイル階層(FHS)とパーミッションの基礎
+│   └── 04_package_and_system_layout.md    # パッケージ管理とシステムの構成/起動の概観
+├── 02_process_kernel/
 │   ├── 01_process_thread_basics.md        # プロセス/スレッドの基本、PCB、fork/exec
 │   ├── 02_syscall_context_switch.md       # システムコールとコンテキストスイッチ
 │   ├── 03_virtual_memory.md               # 仮想メモリ、ページテーブル、TLB
-│   ├── 04_scheduler.md                    # CFS等スケジューラの原理
+│   ├── 04_scheduler.md                    # EEVDF等スケジューラの原理(CFSからの変遷含む)
 │   └── 05_signals_ipc.md                  # シグナル、IPC概要
-├── 02_filesystem_storage/
+├── 03_filesystem_storage/
 │   ├── 01_vfs_basics.md                   # VFS抽象化層
 │   ├── 02_ext4_xfs_journaling.md          # ジャーナリングファイルシステム
 │   ├── 03_inode_block_management.md       # inode、ブロック管理
 │   ├── 04_lvm_raid.md                     # LVM、RAID
 │   └── 05_network_storage.md              # NFS/iSCSI基礎
-├── 03_linux_network_stack/
+├── 04_linux_network_stack/
 │   ├── 01_socket_api.md                   # ソケットAPI、システムコールからパケットまで
 │   ├── 02_netfilter_nftables.md           # netfilter/nftablesのフック機構
 │   ├── 03_network_namespaces.md           # ネットワークネームスペース
 │   └── 04_qdisc_traffic_control.md        # tc/qdiscのパケットスケジューリング
-├── 04_virtualization_containers/
+├── 05_virtualization_containers/
 │   ├── 01_cgroups_namespaces.md           # cgroups/namespacesの理論(コンテナの土台)
 │   ├── 02_kvm_qemu.md                     # KVM/QEMUによるハードウェア仮想化
 │   └── 03_container_runtime.md            # コンテナランタイムの仕組み(containerd等)
-├── 05_systemd_service_mgmt/
+├── 06_systemd_service_mgmt/
 │   ├── 01_init_systemd_overview.md        # initからsystemdへ
 │   ├── 02_unit_dependency.md              # Unit定義と依存関係解決
 │   └── 03_cgroup_integration_journald.md  # cgroup連携とjournald
-├── 06_ha_clustering/
+├── 07_operations_security/
+│   ├── 01_user_permission_auth.md         # ユーザー/グループ/sudo/認証(PAM)の運用
+│   ├── 02_ssh_remote_access.md            # SSHとリモートアクセスの運用
+│   ├── 03_package_update_backup.md        # パッケージ/更新管理とバックアップ
+│   └── 04_firewall_hardening.md           # ファイアウォールと基本的なセキュリティ堅牢化
+├── 08_ha_clustering/
 │   ├── 01_cluster_fundamentals.md         # クラスタリングの基本概念、split-brain
 │   ├── 02_pacemaker_corosync.md           # Pacemaker/Corosyncの合意形成
 │   └── 03_load_balancing_replication.md   # ロードバランシングとレプリケーション
-├── 07_observability/
+├── 09_observability/
 │   ├── 01_syslog_logging.md               # syslogとログ設計
 │   ├── 02_metrics_logs_traces.md          # メトリクス/ログ/トレースの三本柱
 │   └── 03_prometheus_pull_model.md        # Prometheusのpull型設計思想
@@ -115,32 +134,40 @@ server_textbook/
 |---|---|---|
 | 0 | `shared/glossary.md`, `shared/style_guide.md` | 空のひな形を作成(以後随時追記) |
 | 1 | `00_overview/01_roadmap.md` | 教科書全体のロードマップ・前提知識マップ |
-| 2 | `01_process_kernel/01_process_thread_basics.md` | プロセス/スレッドの基本、PCB、fork/exec |
-| 3 | `01_process_kernel/02_syscall_context_switch.md` | システムコールとコンテキストスイッチ |
-| 4 | `01_process_kernel/03_virtual_memory.md` | 仮想メモリ、ページテーブル、TLB |
-| 5 | `01_process_kernel/04_scheduler.md` | CFS等スケジューラの原理 |
-| 6 | `01_process_kernel/05_signals_ipc.md` | シグナル、IPC概要 |
-| 7 | `02_filesystem_storage/01_vfs_basics.md` | VFS抽象化層 |
-| 8 | `02_filesystem_storage/02_ext4_xfs_journaling.md` | ジャーナリングファイルシステム |
-| 9 | `02_filesystem_storage/03_inode_block_management.md` | inode、ブロック管理 |
-| 10 | `02_filesystem_storage/04_lvm_raid.md` | LVM、RAID |
-| 11 | `02_filesystem_storage/05_network_storage.md` | NFS/iSCSI基礎 |
-| 12 | `03_linux_network_stack/01_socket_api.md` | ソケットAPI、システムコールからパケットまで |
-| 13 | `03_linux_network_stack/02_netfilter_nftables.md` | netfilter/nftablesのフック機構 |
-| 14 | `03_linux_network_stack/03_network_namespaces.md` | ネットワークネームスペース |
-| 15 | `03_linux_network_stack/04_qdisc_traffic_control.md` | tc/qdiscのパケットスケジューリング |
-| 16 | `04_virtualization_containers/01_cgroups_namespaces.md` | cgroups/namespacesの理論 |
-| 17 | `04_virtualization_containers/02_kvm_qemu.md` | KVM/QEMUによるハードウェア仮想化 |
-| 18 | `04_virtualization_containers/03_container_runtime.md` | コンテナランタイムの仕組み |
-| 19 | `05_systemd_service_mgmt/01_init_systemd_overview.md` | initからsystemdへ |
-| 20 | `05_systemd_service_mgmt/02_unit_dependency.md` | Unit定義と依存関係解決 |
-| 21 | `05_systemd_service_mgmt/03_cgroup_integration_journald.md` | cgroup連携とjournald |
-| 22 | `06_ha_clustering/01_cluster_fundamentals.md` | クラスタリングの基本概念、split-brain |
-| 23 | `06_ha_clustering/02_pacemaker_corosync.md` | Pacemaker/Corosyncの合意形成 |
-| 24 | `06_ha_clustering/03_load_balancing_replication.md` | ロードバランシングとレプリケーション |
-| 25 | `07_observability/01_syslog_logging.md` | syslogとログ設計 |
-| 26 | `07_observability/02_metrics_logs_traces.md` | メトリクス/ログ/トレースの三本柱 |
-| 27 | `07_observability/03_prometheus_pull_model.md` | Prometheusのpull型設計思想 |
+| 2 | `01_intro/01_server_os_kernel_overview.md` | サーバー/OS/カーネルとは何か、全体像 |
+| 3 | `01_intro/02_shell_and_commands.md` | シェルとコマンドの仕組み、標準入出力/パイプ |
+| 4 | `01_intro/03_filesystem_hierarchy_permissions.md` | ファイル階層(FHS)とパーミッションの基礎 |
+| 5 | `01_intro/04_package_and_system_layout.md` | パッケージ管理とシステムの構成/起動の概観 |
+| 6 | `02_process_kernel/01_process_thread_basics.md` | プロセス/スレッドの基本、PCB、fork/exec |
+| 7 | `02_process_kernel/02_syscall_context_switch.md` | システムコールとコンテキストスイッチ |
+| 8 | `02_process_kernel/03_virtual_memory.md` | 仮想メモリ、ページテーブル、TLB |
+| 9 | `02_process_kernel/04_scheduler.md` | EEVDF等スケジューラの原理(CFSからの変遷含む) |
+| 10 | `02_process_kernel/05_signals_ipc.md` | シグナル、IPC概要 |
+| 11 | `03_filesystem_storage/01_vfs_basics.md` | VFS抽象化層 |
+| 12 | `03_filesystem_storage/02_ext4_xfs_journaling.md` | ジャーナリングファイルシステム |
+| 13 | `03_filesystem_storage/03_inode_block_management.md` | inode、ブロック管理 |
+| 14 | `03_filesystem_storage/04_lvm_raid.md` | LVM、RAID |
+| 15 | `03_filesystem_storage/05_network_storage.md` | NFS/iSCSI基礎 |
+| 16 | `04_linux_network_stack/01_socket_api.md` | ソケットAPI、システムコールからパケットまで |
+| 17 | `04_linux_network_stack/02_netfilter_nftables.md` | netfilter/nftablesのフック機構 |
+| 18 | `04_linux_network_stack/03_network_namespaces.md` | ネットワークネームスペース |
+| 19 | `04_linux_network_stack/04_qdisc_traffic_control.md` | tc/qdiscのパケットスケジューリング |
+| 20 | `05_virtualization_containers/01_cgroups_namespaces.md` | cgroups/namespacesの理論 |
+| 21 | `05_virtualization_containers/02_kvm_qemu.md` | KVM/QEMUによるハードウェア仮想化 |
+| 22 | `05_virtualization_containers/03_container_runtime.md` | コンテナランタイムの仕組み |
+| 23 | `06_systemd_service_mgmt/01_init_systemd_overview.md` | initからsystemdへ |
+| 24 | `06_systemd_service_mgmt/02_unit_dependency.md` | Unit定義と依存関係解決 |
+| 25 | `06_systemd_service_mgmt/03_cgroup_integration_journald.md` | cgroup連携とjournald |
+| 26 | `07_operations_security/01_user_permission_auth.md` | ユーザー/グループ/sudo/認証(PAM)の運用 |
+| 27 | `07_operations_security/02_ssh_remote_access.md` | SSHとリモートアクセスの運用 |
+| 28 | `07_operations_security/03_package_update_backup.md` | パッケージ/更新管理とバックアップ |
+| 29 | `07_operations_security/04_firewall_hardening.md` | ファイアウォールと基本的なセキュリティ堅牢化 |
+| 30 | `08_ha_clustering/01_cluster_fundamentals.md` | クラスタリングの基本概念、split-brain |
+| 31 | `08_ha_clustering/02_pacemaker_corosync.md` | Pacemaker/Corosyncの合意形成 |
+| 32 | `08_ha_clustering/03_load_balancing_replication.md` | ロードバランシングとレプリケーション |
+| 33 | `09_observability/01_syslog_logging.md` | syslogとログ設計 |
+| 34 | `09_observability/02_metrics_logs_traces.md` | メトリクス/ログ/トレースの三本柱 |
+| 35 | `09_observability/03_prometheus_pull_model.md` | Prometheusのpull型設計思想 |
 
 ## 進捗管理ファイルの運用
 
@@ -256,5 +283,5 @@ server_textbook/
 - 1ステップ完了ごとに`progress.md`へ追記してからセッションを終える
 - **1ステップ完了ごとに、変更をGitHubへcommit & pushする**(「Git運用ルール」参照)
 - 技術的に自信がない箇所は、断定せず「要検証」の注記を残し、`progress.md`にも記録する
-- 実装ステップの順番(00_overview → 01_process_kernel → 02〜07)が基本だが、
+- 実装ステップの順番(00_overview → 01_intro → 02_process_kernel → 03〜09)が基本だが、
   各分野は独立して読めるようにも書く
