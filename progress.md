@@ -10,9 +10,9 @@
 
 ## 現在の状態
 
-- 完了ステップ: Step 0〜3
-- 次のステップ: Step 4 `01_intro/03_filesystem_hierarchy_permissions.md`
-  (ファイル階層(FHS)とパーミッションの基礎)から着手する
+- 完了ステップ: Step 0〜4
+- 次のステップ: Step 5 `01_intro/04_package_and_system_layout.md`
+  (パッケージ管理とシステムの構成/起動の概観)から着手する
 
 ---
 
@@ -93,3 +93,21 @@
   再確認する。bash 既定 PATH の実際の値は Ubuntu 26.04 実機で要検証。
   端末(TTY/PTY)の内部機構は本章では扱わず、必要になった時点で扱う章を決める。
 - 次のステップ: Step 4 `01_intro/03_filesystem_hierarchy_permissions.md`
+
+## Step 4: `01_intro/03_filesystem_hierarchy_permissions.md` (完了日: 2026-07-13)
+
+- 完了内容: 単一ツリー+マウント、FHS 3.0の主要ディレクトリと2軸の設計原理
+  (静的/可変・共有可能/固有)、UID/GIDと3×3パーミッションモデル、inode先取り、
+  検査アルゴリズム(最初に一致した1段のみ・open時に一度だけ)、ディレクトリの
+  rwxの意味、umask、特殊ビット(setuid/setgid/sticky)、シンボリックリンクを執筆。
+- 決定事項: (1) glossary へ登録: FHS、inode、root、setuid/setgid/stickyビット、
+  UID/GID、umask、シンボリックリンク、パーミッション、マウント、ルートディレクトリ。
+  標準表記は「パーミッション」「root」に統一。(2) inodeはここで先取り定義し、
+  正式な構造は Step 13(03_filesystem_storage/03)に委ねる。ハードリンクも同章へ。
+  (3) rootの全能性はcapabilityに分割されている旨のみ言及し、詳細は分野07に委ねる。
+  (4)「すべてはファイル」の思想をこの章で明示的に導入(以後の章で再利用する)。
+- 未解決・要検証事項: Ubuntu 26.04 の umask 既定値を 022 と記載——pam_umask や
+  /etc/login.defs 由来の実際の既定は実機で要検証。stat 実行例の inode 番号等の
+  出力形式も実機で要確認。POSIX ACL は存在への言及のみで、扱う章は未定
+  (分野07の候補)。
+- 次のステップ: Step 5 `01_intro/04_package_and_system_layout.md`
