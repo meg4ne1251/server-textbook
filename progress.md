@@ -10,9 +10,9 @@
 
 ## 現在の状態
 
-- 完了ステップ: Step 0〜4
-- 次のステップ: Step 5 `01_intro/04_package_and_system_layout.md`
-  (パッケージ管理とシステムの構成/起動の概観)から着手する
+- 完了ステップ: Step 0〜5(分野01: サーバー・Linux入門 完了)
+- 次のステップ: Step 6 `02_process_kernel/01_process_thread_basics.md`
+  (プロセス/スレッドの基本、PCB、fork/exec)から着手する
 
 ---
 
@@ -111,3 +111,24 @@
   出力形式も実機で要確認。POSIX ACL は存在への言及のみで、扱う章は未定
   (分野07の候補)。
 - 次のステップ: Step 5 `01_intro/04_package_and_system_layout.md`
+
+## Step 5: `01_intro/04_package_and_system_layout.md` (完了日: 2026-07-13)
+
+- 完了内容: 入門分野の最終章。パッケージ=ファイル一式+メタデータ+保守スクリプト
+  (man 5 deb / Debian Policy)、dpkg(台帳・配置)とapt(取得・依存解決)の2層、
+  共有ライブラリと依存関係の由来、署名の連鎖(InRelease→索引→.deb)、起動の
+  バトンリレー(UEFI→GRUB→カーネル+initramfs→PID 1→デーモン)と各段階の
+  FHS上の住所・管轄分野の対応表を執筆。
+- 決定事項: (1) glossary へ登録: initramfs、PID 1(init)、systemd、依存関係、
+  共有ライブラリ、パッケージ、パッケージマネージャ、ファームウェア、ブートローダ、
+  リポジトリ。標準表記は「パッケージマネージャ」「ブートローダ(長音なし)」
+  「PID 1」に統一。(2) 前章の「fdは入場済みの通行証」の比喩を「更新しても実行中の
+  プロセス/カーネルには効かない」の説明に再利用(以後も使える型)。(3) 動的リンク
+  (ELF/ld.so)の詳細はStep 6以降のexec説明に委ね、本章は概略のみ。(4) UEFI/GRUB
+  自体の深掘りは本書では概観のみと明記(管轄分野の対応表に記載)。
+- 未解決・要検証事項: apt policy 実行例の bash バージョン表記(5.2.37-1ubuntu1)は
+  Ubuntu 26.04 実機で要検証。aptの依存解決器の実装詳細(apt 3.x系のsolver)は
+  深入りせず「ヒューリスティクスで解く」とのみ記述——分野07(Step 28)で更新管理を
+  扱う際に必要なら再確認。initramfsのカーネルドキュメントパス
+  (ramfs-rootfs-initramfs.rst)は基準版での存在を要確認。
+- 次のステップ: Step 6 `02_process_kernel/01_process_thread_basics.md`
