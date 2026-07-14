@@ -10,9 +10,9 @@
 
 ## 現在の状態
 
-- 完了ステップ: Step 0〜6(分野01完了、分野02: プロセス・カーネル基礎 着手)
-- 次のステップ: Step 7 `02_process_kernel/02_syscall_context_switch.md`
-  (システムコールとコンテキストスイッチ)から着手する
+- 完了ステップ: Step 0〜7(分野01完了、分野02: プロセス・カーネル基礎 進行中)
+- 次のステップ: Step 8 `02_process_kernel/03_virtual_memory.md`
+  (仮想メモリ、ページテーブル、TLB)から着手する
 
 ---
 
@@ -154,3 +154,30 @@
   glibcのfork→clone実装の詳細(clone3使用の有無)は断定を避けた。
   D状態の詳細は分野03、シグナルはStep 10、スケジューラ状態遷移はStep 9で展開。
 - 次のステップ: Step 7 `02_process_kernel/02_syscall_context_switch.md`
+
+## Step 7: `02_process_kernel/02_syscall_context_switch.md` (完了日: 2026-07-14)
+
+- 完了内容: モード切替とコンテキストスイッチの区別を章の軸に据えた。特権レベル
+  (ring 0/3)の正確な展開(Step 2の伏線回収)、カーネルへの3つの門(syscall/
+  割り込み/例外、いずれも飛び先は登録済み)、x86-64の呼び出し規約(rax+rdi…、
+  POSIX=インタフェース/ABI=機構の役割分担)、errnoの二層構造、vDSO、
+  自発的/非自発的スイッチとタイマー割り込み・TIF_NEED_RESCHED、ブロッキング
+  readの一部始終(sequenceDiagram)、entry_SYSCALL_64の道中、カーネルスタックと
+  pt_regs、context_switch()=switch_mm+switch_to、コストの直接費/間接費、
+  KPTI(発展)を執筆。
+- 決定事項: (1) glossaryへ登録: ABI、errno、vDSO、カーネルスタック、
+  コンテキストスイッチ、特権レベル(ring)、プリエンプション、モード切替、例外。
+  (2) 「コンテキストスイッチは常にカーネル内で起きる」「境界を越えたら足場も
+  履き替える(カーネルスタック)」を以後の章でも使う定型として導入。
+  (3) 割り込み処理の後半(softirq等)は本章では扱わず、分野04(ネットワーク
+  スタック)で必要になった時点で導入する方針。(4) 前章のCoWを「例外」の
+  実例として接続し、例外をglossaryに正式登録した。
+- 未解決・要検証事項: CONFIG_HZは「サーバー向け既定で秒250回程度」と記述——
+  Ubuntu 26.04の実際の値は実機で要検証(tickless/NO_HZの話は意図的に省略、
+  Step 9で必要なら扱う)。モード切替「数十〜数百ns」/コンテキストスイッチ
+  「µs桁」は桁の感覚として記述、厳密値は断定回避済み。
+  Documentation/arch/x86/entry_64.rst と kernel-stacks.rst のパスは
+  Linux 7.0で要確認(6.x系のパスに基づく)。straceの集計値・vDSOのldd出力は
+  Ubuntu 26.04実機で要検証。TLB/PCID/CR3の詳細はStep 8、スケジューラの
+  選択アルゴリズム(EEVDF)はStep 9で展開する。
+- 次のステップ: Step 8 `02_process_kernel/03_virtual_memory.md`
