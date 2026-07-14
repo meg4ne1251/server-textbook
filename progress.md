@@ -10,9 +10,9 @@
 
 ## 現在の状態
 
-- 完了ステップ: Step 0〜5(分野01: サーバー・Linux入門 完了)
-- 次のステップ: Step 6 `02_process_kernel/01_process_thread_basics.md`
-  (プロセス/スレッドの基本、PCB、fork/exec)から着手する
+- 完了ステップ: Step 0〜6(分野01完了、分野02: プロセス・カーネル基礎 着手)
+- 次のステップ: Step 7 `02_process_kernel/02_syscall_context_switch.md`
+  (システムコールとコンテキストスイッチ)から着手する
 
 ---
 
@@ -132,3 +132,25 @@
   扱う際に必要なら再確認。initramfsのカーネルドキュメントパス
   (ramfs-rootfs-initramfs.rst)は基準版での存在を要確認。
 - 次のステップ: Step 6 `02_process_kernel/01_process_thread_basics.md`
+
+## Step 6: `02_process_kernel/01_process_thread_basics.md` (完了日: 2026-07-14)
+
+- 完了内容: 分野02の最初の章。プログラム/プロセスの区別、プロセス=資源一式+
+  隔離の単位、task_struct(PCB)の骨格(資源は参照で持つ設計)、状態遷移
+  (R/S/D/T/Z、stateDiagram)、fork/exec分離の設計理由(posix_spawn対比)、
+  CoW、execで生き残るもの/リセットされるもの(CLOEXEC含む)、wait/ゾンビ/
+  孤児のreparenting(subreaper言及)、Linuxのタスク観とpid/tgidを執筆。
+- 決定事項: (1) glossaryへ登録: exec、fork、wait、PID、task_struct、
+  アドレス空間、親プロセス/子プロセス、コピーオンライト、スレッド、
+  ゾンビプロセス、プロセス。標準表記: 総称は「exec」「wait」、システムコール名は
+  「execve」。Linux文脈は「task_struct」/OS一般論は「PCB」。「コピーオンライト」
+  (2回目以降CoW可)。(2) fdテーブルは複製されるが「開いたファイルの状態」
+  (読み書き位置)は親子共有——二層構造の詳細はStep 11(VFS)に委ねた。
+  (3) 排他制御・競合状態はスレッドの構造理解にとどめ本書では深追いしない方針。
+  (4) 環境変数の引き継ぎの正体(fork複製+execのenvp引数)をこの章で回収済み。
+- 未解決・要検証事項: task_structのメンバ名(__state、real_parent等)は
+  Linux 7.0のsched.hで要確認(6.x系の名称に基づく)。straceのclone出力表記
+  (flags=SIGCHLD)とjournaldのスレッド数の実行例はUbuntu 26.04実機で要検証。
+  glibcのfork→clone実装の詳細(clone3使用の有無)は断定を避けた。
+  D状態の詳細は分野03、シグナルはStep 10、スケジューラ状態遷移はStep 9で展開。
+- 次のステップ: Step 7 `02_process_kernel/02_syscall_context_switch.md`

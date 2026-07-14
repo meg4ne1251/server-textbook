@@ -31,6 +31,17 @@
 
 ## A〜Z
 
+### exec(execve)
+
+- **定義**: 呼び出したプロセスの中身(アドレス空間)を、指定した実行ファイルの
+  プログラムに入れ替えるシステムコール。PID・fdテーブル・カレントディレクトリは
+  exec をまたいで生き残る(CLOEXEC 印付きの fd を除く)。本文の標準表記は
+  総称として「exec」を用い、システムコール名を指すときは「execve」と書く
+- **初出章**: `02_process_kernel/01_process_thread_basics.md`
+  (依頼の3点セットとしての先出しは `01_intro/02_shell_and_commands.md`)
+- **関連一次情報源**: `man 2 execve`、POSIX(IEEE Std 1003.1)
+- **関連用語**: fork、wait、プロセス
+
 ### FHS(Filesystem Hierarchy Standard / ファイルシステム階層標準)
 
 - **定義**: `/etc` `/var` `/usr` など主要ディレクトリの名前・役割・配置原理
@@ -39,6 +50,17 @@
 - **初出章**: `01_intro/03_filesystem_hierarchy_permissions.md`
 - **関連一次情報源**: FHS 3.0(Linux Foundation)、`man 7 hier`
 - **関連用語**: ルートディレクトリ、マウント
+
+### fork
+
+- **定義**: 呼び出したプロセスの複製(子プロセス)を作るシステムコール。
+  アドレス空間はコピーオンライトで複製され、fdテーブル・カレントディレクトリ・
+  umask 等も子に複製される。PID は新規に振られる。Linux の glibc では
+  内部的に `clone` システムコールとして実装されている
+- **初出章**: `02_process_kernel/01_process_thread_basics.md`
+  (依頼の3点セットとしての先出しは `01_intro/02_shell_and_commands.md`)
+- **関連一次情報源**: `man 2 fork`、`man 2 clone`、POSIX(IEEE Std 1003.1)
+- **関連用語**: exec、wait、コピーオンライト、プロセス
 
 ### initramfs(initial RAM filesystem)
 
@@ -67,6 +89,16 @@
   最初に見つかったものが実行される
 - **初出章**: `01_intro/02_shell_and_commands.md`
 - **関連用語**: 環境変数、シェル、外部コマンド
+
+### PID(Process ID / プロセスID)
+
+- **定義**: カーネルがプロセスを識別する番号。ユーザーから見える「プロセスID」の
+  カーネル内部での実体はスレッドグループの番号(tgid)で、タスク(スレッド)
+  固有の番号はスレッドID(TID)としてユーザーに見える。全プロセスは PID 1 を
+  祖先とする1本のプロセスツリーをなす
+- **初出章**: `02_process_kernel/01_process_thread_basics.md`
+- **関連一次情報源**: `man 2 getpid`、POSIX(IEEE Std 1003.1)
+- **関連用語**: プロセス、スレッド、task_struct、PID 1
 
 ### PID 1(init プロセス)
 
@@ -116,6 +148,17 @@
 - **関連一次情報源**: `man 1 systemd`、`man 7 bootup`
 - **関連用語**: PID 1、デーモン
 
+### task_struct(PCB / プロセス制御ブロック)
+
+- **定義**: Linuxカーネルがタスク(プロセス/スレッド)1つにつき1個持つ管理台帳の
+  構造体(`include/linux/sched.h`)。pid・tgid・状態・親子関係を直接持ち、
+  アドレス空間(mm)・fdテーブル(files)・身分(cred)等は独立した構造体への
+  参照として持つ。OS一般の用語では PCB(Process Control Block)。本文の標準表記は
+  Linuxの文脈では「task_struct」、OS一般論では「PCB」とする
+- **初出章**: `02_process_kernel/01_process_thread_basics.md`
+- **関連一次情報源**: Linuxカーネルソース(include/linux/sched.h)
+- **関連用語**: プロセス、スレッド、PID
+
 ### UID / GID(User ID / Group ID)
 
 - **定義**: カーネルがユーザー・グループを識別する番号。プロセスは身分証として
@@ -135,7 +178,26 @@
 - **関連一次情報源**: `man 2 umask`、POSIX(IEEE Std 1003.1)
 - **関連用語**: パーミッション
 
+### wait
+
+- **定義**: 子プロセスの終了を待ち、終了ステータスを回収するシステムコール群
+  (wait / waitpid / waitid 等の総称)。親が wait で回収するまで、終了済みの子は
+  ゾンビとして task_struct だけが残る。本文の標準表記は総称として「wait」とする
+- **初出章**: `02_process_kernel/01_process_thread_basics.md`
+  (依頼の3点セットとしての先出しは `01_intro/02_shell_and_commands.md`)
+- **関連一次情報源**: `man 2 wait`、POSIX(IEEE Std 1003.1)
+- **関連用語**: fork、終了ステータス、ゾンビプロセス
+
 ## あ行
+
+### アドレス空間(address space)
+
+- **定義**: プロセスごとにカーネルが与える専用の「メモリの眺め」。プログラムの
+  コード・データ・スタックはここに載り、他のプロセスのメモリは見えも触れも
+  できない(隔離)。実現機構である仮想メモリの詳細は
+  `02_process_kernel/03_virtual_memory.md` で扱う
+- **初出章**: `02_process_kernel/01_process_thread_basics.md`
+- **関連用語**: プロセス、コピーオンライト
 
 ### 依存関係(dependency)
 
@@ -145,6 +207,16 @@
 - **初出章**: `01_intro/04_package_and_system_layout.md`
 - **関連一次情報源**: Debian Policy Manual
 - **関連用語**: パッケージ、共有ライブラリ、リポジトリ
+
+### 親プロセス / 子プロセス(parent / child process)
+
+- **定義**: fork で複製した側が親、複製された側が子。task_struct は双方向の
+  参照(real_parent / children)で家系図を記録する。親は wait で子の終了
+  ステータスを回収する責務を持ち、親を失った子(孤児)は PID 1(または
+  subreaper)に養子縁組される
+- **初出章**: `02_process_kernel/01_process_thread_basics.md`
+- **関連一次情報源**: `man 2 fork`、`man 2 wait`、`man 2 prctl`(PR_SET_CHILD_SUBREAPER)
+- **関連用語**: fork、wait、ゾンビプロセス、PID 1
 
 ## か行
 
@@ -213,6 +285,17 @@
 - **関連一次情報源**: `man 8 ld.so`
 - **関連用語**: 依存関係、パッケージ
 
+### コピーオンライト(copy-on-write / CoW)
+
+- **定義**: 「コピーしたことにしておき、実際の複製は書き込まれた部分だけ・
+  書き込まれた時に行う」遅延コピー戦略。fork のアドレス空間複製で使われ、
+  親子のページテーブルを同じ物理メモリに書き込み禁止で向けておき、書き込み時の
+  例外を契機にそのページだけ複製する。本文の標準表記は「コピーオンライト」
+  とし、2回目以降は「CoW」も用いる
+- **初出章**: `02_process_kernel/01_process_thread_basics.md`
+- **関連一次情報源**: `man 2 fork`
+- **関連用語**: fork、アドレス空間
+
 ## さ行
 
 ### サーバー(server)
@@ -257,6 +340,26 @@
 - **初出章**: `01_intro/02_shell_and_commands.md`
 - **関連一次情報源**: POSIX(IEEE Std 1003.1)
 - **関連用語**: シェル、プロセス
+
+### スレッド(thread)
+
+- **定義**: プロセス内部の実行の流れの単位。同一プロセスのスレッドどうしは
+  アドレス空間・fdテーブル・身分を共有し、実行位置とスタックだけを各自で持つ。
+  Linuxカーネル内部ではプロセスと区別されず、どちらも「タスク」(task_struct
+  1個)であり、clone のフラグによる資源共有の度合いが違うだけ
+- **初出章**: `02_process_kernel/01_process_thread_basics.md`
+- **関連一次情報源**: `man 7 pthreads`、`man 2 clone`、POSIX(IEEE Std 1003.1)
+- **関連用語**: プロセス、task_struct、PID
+
+### ゾンビプロセス(zombie process)
+
+- **定義**: 終了済みだが、親プロセスがまだ wait で終了ステータスを回収して
+  いない状態のプロセス(`ps` の STAT では Z、表示は `<defunct>`)。実行資源は
+  すべて解放済みで、PID と終了ステータスを含む最小限の記録(task_struct)だけが
+  残る。少数なら正常な一生の最終段階であり、大量に溜まる場合のみ親の欠陥を疑う
+- **初出章**: `02_process_kernel/01_process_thread_basics.md`
+- **関連一次情報源**: `man 2 wait`、`man 1 ps`(PROCESS STATE CODES)
+- **関連用語**: wait、親プロセス / 子プロセス、PID
 
 ## た行
 
@@ -366,6 +469,17 @@
 - **初出章**: `01_intro/02_shell_and_commands.md`
 - **関連一次情報源**: POSIX(IEEE Std 1003.1)
 - **関連用語**: 標準入出力、リダイレクト、パイプ
+
+### プロセス(process)
+
+- **定義**: 実行中のプログラムと、それにカーネルが割り当てた資源一式
+  (アドレス空間、fdテーブル、身分、カレントディレクトリ等)。カーネルから見た
+  資源配分と隔離の基本単位で、1個以上のスレッドを収める容れ物でもある。
+  ディスク上の実行ファイル(プログラム)とは区別する
+- **初出章**: `02_process_kernel/01_process_thread_basics.md`
+  (言及のみの先出しは `01_intro/01_server_os_kernel_overview.md`)
+- **関連一次情報源**: POSIX(IEEE Std 1003.1)、`man 5 proc`
+- **関連用語**: スレッド、task_struct、PID、アドレス空間
 
 ### ブートローダ(boot loader)
 
