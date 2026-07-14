@@ -10,9 +10,9 @@
 
 ## 現在の状態
 
-- 完了ステップ: Step 0〜8(分野01完了、分野02: プロセス・カーネル基礎 進行中)
-- 次のステップ: Step 9 `02_process_kernel/04_scheduler.md`
-  (EEVDF等スケジューラの原理、CFSからの変遷含む)から着手する
+- 完了ステップ: Step 0〜9(分野01完了、分野02: プロセス・カーネル基礎 進行中)
+- 次のステップ: Step 10 `02_process_kernel/05_signals_ipc.md`
+  (シグナル、IPC概要)から着手する
 
 ---
 
@@ -208,3 +208,32 @@
   maple tree導入版(6.1)とTHP/HugeTLBのドキュメントパスも基準版で再確認。
   スラッシング対策・swappiness等の運用チューニングは分野07/09で扱うか未定。
 - 次のステップ: Step 9 `02_process_kernel/04_scheduler.md`
+
+## Step 9: `02_process_kernel/04_scheduler.md` (完了日: 2026-07-14)
+
+- 完了内容: 「機構(context_switch)と方針(pick)の分離」を章の軸に、素朴案
+  (FIFO/輪番/優先度)の破綻→重み付き公平分配、スケジューリングクラスの階層
+  (stop>deadline>realtime>fair>idle、RTスロットリング)、nice→weight
+  (1段≒1.25倍)、流体モデル、CFS(vruntime会計、限界=レイテンシ表現の欠如)、
+  EEVDF(lag/資格/仮想締切、量と順番の分離、1995年原論文)、ランキューと
+  R状態の実体(Step 6回収)、tick→pickフロー(Step 7のTIF_NEED_RESCHED回収)、
+  wakeup preemption、NO_HZ_IDLE(Step 7のCONFIG_HZ宿題回収)、SMPロード
+  バランシングとcache hot(Step 8のTLB接続)、発展でSCHED_DEADLINEと
+  スライス申告を執筆。
+- 決定事項: (1) glossaryへ登録: CFS、EEVDF、nice値、vruntime、スケジューラ、
+  スケジューリングクラス/ポリシー、タイムスライス/スライス、ランキュー、
+  ロードアベレージ、ロードバランシング。標準表記: EEVDF文脈は「スライス」/
+  一般論は「タイムスライス」、「資格(eligibility)」「仮想締切
+  (virtual deadline)」「lag(貸し借りの残高)」。(2) 「量(公平)はlagと
+  資格が守り、順番(応答性)はスライスが決める」を本章の定型として導入。
+  (3) 公平キューイング系譜としてqdisc(分野04)への橋を予告。group
+  schedulingは分野05、PSIは分野09に委ねた。(4) HRTICK・NUMAバランシングの
+  詳細・O(1)スケジューラの内部は深追いせず不掲載。
+- 未解決・要検証事項: base_slice既定値を0.75ms程度と記載——Linux 7.0の
+  /sys/kernel/debug/sched/base_slice_ns 実値は要検証。sched-eevdf.rstの
+  存在・パスも基準版で要確認(6.x系に基づく)。sched_setattrの
+  sched_runtimeによるスライス申告は「Linux 6.12以降・要検証」と注記済み。
+  /proc/PID/schedのフィールド名(se.deadline、se.slice)とps CLS列の出力、
+  chrt -mの出力形式はUbuntu 26.04実機で要検証。RTスロットリング既定95%は
+  cgroup v2環境での挙動変化があれば分野05で再確認。
+- 次のステップ: Step 10 `02_process_kernel/05_signals_ipc.md`

@@ -41,6 +41,29 @@
 - **関連一次情報源**: `man 2 syscall`(アーキテクチャ別規約一覧)
 - **関連用語**: システムコール、レジスタ
 
+### CFS(Completely Fair Scheduler / 完全公平スケジューラ)
+
+- **定義**: Linux 2.6.23(2007年)から 6.5 まで使われた fair クラスの
+  スケジューリングアルゴリズム。「常に vruntime 最小のタスクを選ぶ」ことで
+  重み比の公平分配を実現した。応答性(レイテンシ要求)を原理の中で表現する
+  手段を持たず、一律のヒューリスティクスに頼った点が EEVDF への置き換え
+  (Linux 6.6)の動機。本書では歴史的経緯・対比の文脈で扱う
+- **初出章**: `02_process_kernel/04_scheduler.md`
+- **関連一次情報源**: カーネルドキュメント(Documentation/scheduler/sched-design-CFS.rst)
+- **関連用語**: EEVDF、vruntime、スケジューラ、nice値
+
+### EEVDF(Earliest Eligible Virtual Deadline First)
+
+- **定義**: Linux 6.6 以降の fair クラスの標準スケジューリングアルゴリズム。
+  「資格のある(lag ≥ 0 = もらいすぎていない)タスクの中で、仮想締切が
+  最も早い者を選ぶ」。受け取る総量の公平は lag と資格が守り、応答性は
+  スライス由来の締切の早さとして表現される。原典は Stoica / Abdel-Wahab に
+  よる1995年の論文
+- **初出章**: `02_process_kernel/04_scheduler.md`
+- **関連一次情報源**: カーネルドキュメント(Documentation/scheduler/sched-eevdf.rst)、
+  Stoica & Abdel-Wahab (1995)
+- **関連用語**: CFS、vruntime、nice値、ランキュー、タイムスライス
+
 ### errno
 
 - **定義**: 直近のシステムコール等の失敗理由を示すエラー番号が入る、POSIX が
@@ -120,6 +143,17 @@
   キャッシュされる
 - **初出章**: `02_process_kernel/03_virtual_memory.md`
 - **関連用語**: ページテーブル、TLB、仮想メモリ
+
+### nice値(nice value)
+
+- **定義**: fair クラスのタスクの重み(weight)を決めるユーザー向けの値。
+  範囲は -20〜+19、既定 0 で、**小さいほど優遇**される(「他人に nice な
+  ほど値が大きい」が名前の由来)。1段の差で重みが約 1.25 倍変わり、
+  nice 0 が基準の weight 1024 にあたる。受け取る CPU 時間の総量は長期的に
+  この重みに比例する
+- **初出章**: `02_process_kernel/04_scheduler.md`
+- **関連一次情報源**: `man 2 nice`、`man 7 sched`、POSIX(IEEE Std 1003.1)
+- **関連用語**: スケジューラ、EEVDF、vruntime
 
 ### OOM killer(Out Of Memory killer)
 
@@ -247,6 +281,17 @@
 - **初出章**: `02_process_kernel/02_syscall_context_switch.md`
 - **関連一次情報源**: `man 7 vdso`
 - **関連用語**: システムコール、共有ライブラリ、アドレス空間
+
+### vruntime(仮想ランタイム / virtual runtime)
+
+- **定義**: タスクが受け取った CPU 時間を重みで換算した会計値
+  (進み = 実行時間 × 1024/weight)。重いタスクほどゆっくり進むため、
+  全タスクのこの値を揃えるように走らせると実時間の分配が重み比になる。
+  CFS では選択の直接のキー、EEVDF では lag(貸し借りの残高)と仮想締切を
+  算出する土台として使われる
+- **初出章**: `02_process_kernel/04_scheduler.md`
+- **関連一次情報源**: カーネルソース(kernel/sched/fair.c)、`/proc/<PID>/sched`
+- **関連用語**: CFS、EEVDF、nice値、スケジューラ
 
 ### VMA(vm_area_struct / 仮想メモリ領域)
 
@@ -467,6 +512,28 @@
 - **関連一次情報源**: POSIX(IEEE Std 1003.1)
 - **関連用語**: シェル、プロセス
 
+### スケジューラ(scheduler)
+
+- **定義**: 走行可能なタスクの中から次に CPU を使う者を選ぶカーネルの
+  仕組み。交代の機構(コンテキストスイッチ)に対する「方針」側にあたる。
+  Linux ではスケジューリングクラスの階層をなし、通常のタスクは fair クラス
+  (Linux 6.6 以降は EEVDF)が受け持つ
+- **初出章**: `02_process_kernel/04_scheduler.md`
+- **関連一次情報源**: `man 7 sched`、カーネルドキュメント(Documentation/scheduler/)
+- **関連用語**: スケジューリングクラス、ランキュー、コンテキストスイッチ、EEVDF
+
+### スケジューリングクラス / ポリシー(scheduling class / policy)
+
+- **定義**: Linux のスケジューラを構成する絶対優先の階層
+  (stop > deadline > realtime > fair > idle)。上位クラスに走行可能な
+  タスクがいる限り下位に順番は回らない。ユーザーにはポリシー
+  (SCHED_FIFO / SCHED_RR / SCHED_OTHER / SCHED_BATCH / SCHED_IDLE /
+  SCHED_DEADLINE)として見える。POSIX が規定するのは FIFO / RR / OTHER の
+  3つで、残りは Linux の拡張
+- **初出章**: `02_process_kernel/04_scheduler.md`
+- **関連一次情報源**: `man 7 sched`、POSIX(IEEE Std 1003.1)
+- **関連用語**: スケジューラ、nice値
+
 ### スレッド(thread)
 
 - **定義**: プロセス内部の実行の流れの単位。同一プロセスのスレッドどうしは
@@ -499,6 +566,17 @@
 - **関連用語**: wait、親プロセス / 子プロセス、PID
 
 ## た行
+
+### タイムスライス / スライス(time slice)
+
+- **定義**: 交代までにタスクが連続して走れる時間の持ち分。EEVDF では
+  仮想締切の算出に使われるタスクごとの申告値(既定は base_slice)で、
+  短いほど「早く・細かく」、長いほど「遅く・まとまって」走る。受け取る
+  総量の公平とは独立に、順番(応答性)だけを左右する。本文の標準表記は
+  EEVDF の文脈では「スライス」、一般論では「タイムスライス」とする
+- **初出章**: `02_process_kernel/04_scheduler.md`
+- **関連一次情報源**: カーネルドキュメント(Documentation/scheduler/sched-eevdf.rst)
+- **関連用語**: EEVDF、スケジューラ、プリエンプション
 
 ### 端末(terminal / ターミナル)
 
@@ -734,6 +812,17 @@
 - **初出章**: `01_intro/01_server_os_kernel_overview.md`
 - **関連用語**: カーネル、カーネル空間 / ユーザー空間、ディストリビューション
 
+### ランキュー(run queue / rq)
+
+- **定義**: CPU(論理コア)1つにつき1本用意される、走行可能なタスクの
+  待合室(struct rq)。クラスごとのサブキュー(fair 用の cfs_rq 等)を束ね、
+  fair クラスでは赤黒木で管理される。R(TASK_RUNNING)状態の実体は
+  「いずれかのランキューに載っている(または走行中)」こと。CPU 間の
+  偏りはロードバランシングで是正される
+- **初出章**: `02_process_kernel/04_scheduler.md`
+- **関連一次情報源**: カーネルソース(kernel/sched/sched.h)
+- **関連用語**: スケジューラ、task_struct、ロードバランシング
+
 ### ルートディレクトリ(root directory / 「/」)
 
 - **定義**: 単一ディレクトリツリーの根となるディレクトリ。POSIXはファイルの
@@ -771,6 +860,26 @@
 - **初出章**: `02_process_kernel/02_syscall_context_switch.md`
   (CoW の文脈での先出しは `02_process_kernel/01_process_thread_basics.md`)
 - **関連用語**: 割り込み、システムコール、特権レベル、コピーオンライト
+
+### ロードアベレージ(load average)
+
+- **定義**: 「走行可能(R)+割り込み不能な待ち(D)」のタスク数の
+  指数移動平均(1分・5分・15分)。D 状態を含むため、CPU 需要だけでなく
+  ディスク・NFS の詰まりでも上昇する点が CPU 使用率との大きな違い。
+  絶対値ではなくコア数との比で読む。`/proc/loadavg`、`uptime` 等で見える
+- **初出章**: `02_process_kernel/04_scheduler.md`
+- **関連一次情報源**: `man 5 proc`
+- **関連用語**: ランキュー、スケジューラ
+
+### ロードバランシング(load balancing)
+
+- **定義**: CPU ごとに分かれたランキュー間の偏りを、タスクの移送
+  (migration)で均すスケジューラの機能。移送はキャッシュ・TLB の足跡
+  (cache hot)を失うコストを伴うため、SMT → LLC 共有コア群 → NUMA ノード →
+  マシン全体というスケジューリングドメインの階層ごとに、近いほど頻繁に・
+  遠いほど慎重に行われる
+- **初出章**: `02_process_kernel/04_scheduler.md`
+- **関連用語**: ランキュー、スケジューラ、TLB
 
 ### 割り込み(interrupt)
 
