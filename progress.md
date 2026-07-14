@@ -10,9 +10,9 @@
 
 ## 現在の状態
 
-- 完了ステップ: Step 0〜7(分野01完了、分野02: プロセス・カーネル基礎 進行中)
-- 次のステップ: Step 8 `02_process_kernel/03_virtual_memory.md`
-  (仮想メモリ、ページテーブル、TLB)から着手する
+- 完了ステップ: Step 0〜8(分野01完了、分野02: プロセス・カーネル基礎 進行中)
+- 次のステップ: Step 9 `02_process_kernel/04_scheduler.md`
+  (EEVDF等スケジューラの原理、CFSからの変遷含む)から着手する
 
 ---
 
@@ -181,3 +181,30 @@
   Ubuntu 26.04実機で要検証。TLB/PCID/CR3の詳細はStep 8、スケジューラの
   選択アルゴリズム(EEVDF)はStep 9で展開する。
 - 次のステップ: Step 8 `02_process_kernel/03_virtual_memory.md`
+
+## Step 8: `02_process_kernel/03_virtual_memory.md` (完了日: 2026-07-14)
+
+- 完了内容: 「翻訳表を1枚挟む」を軸に、仮想メモリなしの3問題(隔離・配置・容量)
+  →ページ/PTE属性ビット→多段ページテーブル(4段、CR3=根)→MMU/TLB/PCID
+  (前章の間接費・KPTIの伏線回収)→ページフォールト=正常な仕組み(デマンド
+  ページング、CoW回収、遅延読み込み、スワップ)、VMAとページテーブルの二層構造、
+  フォールトハンドラの分岐フロー(graph TD)、SIGSEGVの正体、回収とOOM killer、
+  Huge Page(発展)を執筆。
+- 決定事項: (1) glossaryへ登録: mmap、MMU、OOM killer、TLB、VMA、
+  オーバーコミット、仮想メモリ(仮想/物理アドレス含む)、スワップ、
+  デマンドページング、ページ/ページフレーム、ページキャッシュ、ページテーブル、
+  ページフォールト。標準表記:「メジャーフォールト/マイナーフォールト」
+  「ファイルバック/アノニマス」「メイプルツリー(Linux 6.1以降)」。
+  (2) 二層構造の定型「VMA=予約の台帳(あるべき姿)/ページテーブル=実態
+  (いまの姿)」を導入、SIGSEGV判定はVMA側と明確化。(3) buddy/slab等の物理
+  メモリアロケータは深追いせず不掲載(必要なら分野03以降)。ページキャッシュの
+  詳細は分野03(VFS)、ASLRの深掘りは分野07、SIGSEGV等シグナル機構はStep 10に
+  委ねた。(4) x86-64は4段(48bit)を基本とし、5段(57bit、Linux 4.14以降)は
+  言及のみ。
+- 未解決・要検証事項: Documentation/admin-guide/mm/concepts.rst と
+  Documentation/arch/x86/x86_64/mm.rst のパスはLinux 7.0で要確認(6.x系に
+  基づく)。TLBエントリ数「千数百程度の桁」は概数——具体CPUの値は断定回避。
+  /proc/self/maps・free・vmstat等の実行例の出力形式はUbuntu 26.04実機で要検証。
+  maple tree導入版(6.1)とTHP/HugeTLBのドキュメントパスも基準版で再確認。
+  スラッシング対策・swappiness等の運用チューニングは分野07/09で扱うか未定。
+- 次のステップ: Step 9 `02_process_kernel/04_scheduler.md`
