@@ -94,6 +94,15 @@
 - **関連一次情報源**: FHS 3.0(Linux Foundation)、`man 7 hier`
 - **関連用語**: ルートディレクトリ、マウント
 
+### FIFO(named pipe / 名前付きパイプ)
+
+- **定義**: パイプと同じカーネル内バッファの通路を、ファイルシステム上の
+  名前(特殊ファイル)として置いたもの(`mkfifo` で作成)。fd を fork で
+  引き継げる血縁関係になくても、名前を待ち合わせ場所にして通信できる
+- **初出章**: `02_process_kernel/05_signals_ipc.md`
+- **関連一次情報源**: `man 7 fifo`、POSIX(IEEE Std 1003.1)
+- **関連用語**: パイプ、IPC
+
 ### fork
 
 - **定義**: 呼び出したプロセスの複製(子プロセス)を作るシステムコール。
@@ -104,6 +113,16 @@
   (依頼の3点セットとしての先出しは `01_intro/02_shell_and_commands.md`)
 - **関連一次情報源**: `man 2 fork`、`man 2 clone`、POSIX(IEEE Std 1003.1)
 - **関連用語**: exec、wait、コピーオンライト、プロセス
+
+### futex(Fast Userspace muTEX)
+
+- **定義**: 競合がない限りシステムコールなしのユーザー空間内の操作だけで
+  済む同期プリミティブ。競合したときだけカーネルに入り待ち行列で眠る。
+  pthread の mutex 等、ユーザー空間の同期機構の土台。本書では位置づけの
+  理解にとどめ、深掘りはしない
+- **初出章**: `02_process_kernel/05_signals_ipc.md`
+- **関連一次情報源**: `man 2 futex`
+- **関連用語**: セマフォ、スレッド、システムコール
 
 ### initramfs(initial RAM filesystem)
 
@@ -124,6 +143,18 @@
 - **初出章**: `01_intro/03_filesystem_hierarchy_permissions.md`
 - **関連一次情報源**: `man 7 inode`
 - **関連用語**: パーミッション、UID / GID
+
+### IPC(Inter-Process Communication / プロセス間通信)
+
+- **定義**: 隔離されたプロセスどうしがデータをやり取りする仕組みの総称。
+  バイトストリーム(パイプ / FIFO / UNIXドメインソケット)、メッセージ
+  (メッセージキュー)、共有メモリ、同期(セマフォ / futex)の4系統に
+  分類できる。どの手段もカーネル経由で実現される(共有メモリは設定時のみ
+  カーネルが関与し、以後の読み書きには介在しない)
+- **初出章**: `02_process_kernel/05_signals_ipc.md`
+- **関連一次情報源**: `man 7 pipe`、`man 7 shm_overview`、`man 7 unix`、
+  POSIX(IEEE Std 1003.1)
+- **関連用語**: パイプ、共有メモリ、UNIXドメインソケット、シグナル
 
 ### mmap
 
@@ -271,6 +302,17 @@
 - **初出章**: `01_intro/03_filesystem_hierarchy_permissions.md`
 - **関連一次情報源**: `man 2 umask`、POSIX(IEEE Std 1003.1)
 - **関連用語**: パーミッション
+
+### UNIXドメインソケット(UNIX domain socket)
+
+- **定義**: 同一ホスト内のプロセス間通信に使うソケット。API はネットワーク
+  ソケットと同一だが通信はカーネル内で完結し、待ち合わせにはファイル
+  システム上のパス名を使う。fd そのものの受け渡し(SCM_RIGHTS)と、相手の
+  身分のカーネル保証つき確認(SO_PEERCRED)ができる。内部機構の詳細は
+  `04_linux_network_stack/01_socket_api.md` が主担当
+- **初出章**: `02_process_kernel/05_signals_ipc.md`
+- **関連一次情報源**: `man 7 unix`、POSIX(IEEE Std 1003.1)
+- **関連用語**: IPC、ファイルディスクリプタ、パイプ
 
 ### vDSO(virtual Dynamic Shared Object)
 
@@ -444,6 +486,18 @@
 - **関連一次情報源**: `man 8 ld.so`
 - **関連用語**: 依存関係、パッケージ
 
+### 共有メモリ(shared memory)
+
+- **定義**: 複数のプロセスのページテーブルに同じ物理ページフレームを
+  指す PTE を書き込み、メモリそのものを共有する IPC。データのコピーが
+  発生しない最速の手段だが、カーネルが読み書きに介在しないため同時
+  アクセスの同期(セマフォ等)を自前で負う。System V 世代(shmget、
+  `ipcs -m` で観察)と POSIX 世代(shm_open、実体は `/dev/shm` の tmpfs)
+  の2世代がある
+- **初出章**: `02_process_kernel/05_signals_ipc.md`
+- **関連一次情報源**: `man 7 shm_overview`、`man 7 sysvipc`
+- **関連用語**: IPC、ページテーブル、mmap、セマフォ
+
 ### コピーオンライト(copy-on-write / CoW)
 
 - **定義**: 「コピーしたことにしておき、実際の複製は書き込まれた部分だけ・
@@ -484,6 +538,40 @@
 - **初出章**: `01_intro/01_server_os_kernel_overview.md`
 - **関連一次情報源**: POSIX(IEEE Std 1003.1)、man セクション2
 - **関連用語**: カーネル空間 / ユーザー空間
+
+### シグナル(signal)
+
+- **定義**: カーネルからプロセスへの非同期の通知。中身は番号1つで、
+  メッセージ本文は運ばない。発生源はハードウェア例外の翻訳(SIGSEGV等)・
+  端末(SIGINT等)・kill による明示送信・カーネル内の出来事(SIGCHLD等)。
+  プロセスはシグナルごとに処分(disposition: デフォルト動作/無視/
+  ハンドラ)を選べるが、SIGKILL と SIGSTOP だけは変更もブロックも不可。
+  標準シグナル(1〜31)は保留中に合流し(同番号は1回にまとまる)、
+  リアルタイムシグナル(SIGRTMIN〜SIGRTMAX)は待ち行列に積まれる
+- **初出章**: `02_process_kernel/05_signals_ipc.md`
+  (SIGSEGV・SIGCHLD としての先出しは `02_process_kernel/03` / `01`)
+- **関連一次情報源**: `man 7 signal`、POSIX(IEEE Std 1003.1)Signal Concepts
+- **関連用語**: シグナルハンドラ、シグナルマスク、割り込み、プロセス
+
+### シグナルハンドラ(signal handler)
+
+- **定義**: シグナル配送時に実行させる関数として sigaction で登録する
+  もの。カーネルがユーザースタック上に組み立てる「偽装された関数呼び出し」
+  として、プログラム本体のどの2命令の間にでも割り込んで走る。この非同期性
+  のため、中から呼べるのは非同期シグナル安全な関数に限られる
+- **初出章**: `02_process_kernel/05_signals_ipc.md`
+- **関連一次情報源**: `man 2 sigaction`、POSIX(IEEE Std 1003.1)
+- **関連用語**: シグナル、非同期シグナル安全、カーネルスタック
+
+### シグナルマスク(signal mask / ブロック)
+
+- **定義**: スレッドごとに持つ「配送を保留させるシグナルの集合」
+  (`man 2 sigprocmask` で操作)。ブロック中に生成されたシグナルは保留集合に
+  留まり、ブロック解除時に配送される。SIGKILL / SIGSTOP はブロックできない。
+  fork では複製され、exec もまたいで引き継がれる
+- **初出章**: `02_process_kernel/05_signals_ipc.md`
+- **関連一次情報源**: `man 2 sigprocmask`、POSIX(IEEE Std 1003.1)
+- **関連用語**: シグナル、スレッド
 
 ### シンボリックリンク(symbolic link / symlink)
 
@@ -554,6 +642,16 @@
 - **初出章**: `02_process_kernel/03_virtual_memory.md`
 - **関連一次情報源**: カーネルドキュメント(Documentation/admin-guide/mm/concepts.rst)
 - **関連用語**: ページフォールト、仮想メモリ、OOM killer
+
+### セマフォ(semaphore)
+
+- **定義**: 「同時に入れる数」を数えるカウンター型の同期プリミティブ。
+  獲得で減り、解放で増え、0 のときの獲得は待たされる。カーネルが読み書きに
+  介在しない共有メモリの交通整理役として古典的に使われる。System V 世代
+  (semget)と POSIX 世代(sem_open / sem_init)の2世代がある
+- **初出章**: `02_process_kernel/05_signals_ipc.md`
+- **関連一次情報源**: `man 7 sem_overview`、POSIX(IEEE Std 1003.1)
+- **関連用語**: 共有メモリ、futex、IPC
 
 ### ゾンビプロセス(zombie process)
 
@@ -669,6 +767,17 @@
 - **初出章**: `01_intro/02_shell_and_commands.md`
 - **関連一次情報源**: `man 7 pipe`、`man 2 pipe`
 - **関連用語**: 標準入出力、ファイルディスクリプタ
+
+### 非同期シグナル安全(async-signal-safe)
+
+- **定義**: シグナルハンドラの中から呼んでも安全であることを POSIX が
+  保証する関数の性質(該当する関数の一覧は `man 7 signal-safety`)。
+  ハンドラは本体のどの2命令の間にでも割り込むため、内部状態を持つ関数
+  (printf、malloc 等)は保証外で、再入すると壊れうる。ハンドラの定石
+  「フラグを立てるだけにする」の根拠
+- **初出章**: `02_process_kernel/05_signals_ipc.md`
+- **関連一次情報源**: `man 7 signal-safety`、POSIX(IEEE Std 1003.1)
+- **関連用語**: シグナルハンドラ、シグナル
 
 ### 標準入出力(standard input / output / error)
 
@@ -792,6 +901,17 @@
 - **初出章**: `01_intro/03_filesystem_hierarchy_permissions.md`
 - **関連一次情報源**: `man 8 mount`
 - **関連用語**: ルートディレクトリ、FHS
+
+### メッセージキュー(message queue)
+
+- **定義**: 境界のあるメッセージ単位でデータを受け渡す IPC。バイト
+  ストリームと違い「1依頼=1メッセージ」の形が保存される。System V 世代
+  (msgget、`ipcs -q` で観察)と POSIX 世代(mq_open、実体は `/dev/mqueue`。
+  優先度つき)の2世代がある
+- **初出章**: `02_process_kernel/05_signals_ipc.md`
+- **関連一次情報源**: `man 7 mq_overview`、`man 7 sysvipc`、
+  POSIX(IEEE Std 1003.1)
+- **関連用語**: IPC、パイプ、UNIXドメインソケット
 
 ### モード切替(mode switch)
 

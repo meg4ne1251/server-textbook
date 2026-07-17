@@ -10,9 +10,9 @@
 
 ## 現在の状態
 
-- 完了ステップ: Step 0〜9(分野01完了、分野02: プロセス・カーネル基礎 進行中)
-- 次のステップ: Step 10 `02_process_kernel/05_signals_ipc.md`
-  (シグナル、IPC概要)から着手する
+- 完了ステップ: Step 0〜10(分野01・分野02完了)
+- 次のステップ: Step 11 `03_filesystem_storage/01_vfs_basics.md`
+  (VFS抽象化層)から着手する
 
 ---
 
@@ -237,3 +237,31 @@
   chrt -mの出力形式はUbuntu 26.04実機で要検証。RTスロットリング既定95%は
   cgroup v2環境での挙動変化があれば分野05で再確認。
 - 次のステップ: Step 10 `02_process_kernel/05_signals_ipc.md`
+
+## Step 10: `02_process_kernel/05_signals_ipc.md` (完了日: 2026-07-17)
+
+- 完了内容: 分野02の最終章。「隔離した以上、連絡もカーネル経由」を軸に、
+  通知(シグナル)とデータ(IPC)の2分類→シグナル=割り込みのプロセス版、
+  処分(デフォルト/無視/ハンドラ)、SIGKILL/SIGSTOP不可侵の理由、
+  生成・保留・配送の一生と標準シグナルの合流、非同期シグナル安全、
+  配送=カーネル出口(TIF_SIGPENDING、Step 7の関所と対)、S/D状態の正体
+  (Step 6回収)、ハンドラ=偽装呼び出し+sigreturn、IPC4系統の見取り図、
+  パイプ64KiB(Step 3宿題回収)とSIGPIPE、共有メモリ=同一フレームを指す
+  PTE(Step 8接続)、UNIXドメインソケットとSCM_RIGHTS、SysV/POSIX 2世代、
+  発展でsignalfd/eventfd/pidfdを執筆。
+- 決定事項: (1) glossaryへ登録: FIFO、futex、IPC、UNIXドメインソケット、
+  共有メモリ、シグナル、シグナルハンドラ、シグナルマスク、セマフォ、
+  非同期シグナル安全、メッセージキュー。標準表記:「処分(disposition)」
+  「生成/保留/配送」「合流」(標準シグナルのまとめられ)、
+  「非同期シグナル安全」。(2) S=シグナルで起こせる眠り/D=起こせない眠り、
+  を状態の正式な定義として確定(TASK_KILLABLEは中間として言及)。
+  (3) 同期機構(セマフォ/futex)は位置づけの理解のみで深掘りしない方針を
+  維持。ジョブ制御(セッション/プロセスグループ)は深追いせず分野06へ、
+  ソケット内部は分野04(01_socket_api)へ、signalfd/epoll連携も分野04へ委譲。
+- 未解決・要検証事項: SIGRTMIN実効値(glibcが内部使用のため通常34)と
+  kill -l の出力形式はUbuntu 26.04実機で要検証。パイプ既定容量64KiB・
+  pipe-max-size既定1MiB・PIPE_BUF=4KiBはman 7 pipe(6.x系)に基づく——
+  Linux 7.0での変更有無は要確認。/dev/shmとipcsの実行例出力は実機で要検証。
+  pidfd系(pidfd_open 5.3以降)の版表記も基準版manで再確認。シグナルフレーム
+  の詳細(SA_RESTORER、踏み台の実装がglibc側にある点)は簡略化して記述した。
+- 次のステップ: Step 11 `03_filesystem_storage/01_vfs_basics.md`
