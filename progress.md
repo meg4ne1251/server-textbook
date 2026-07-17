@@ -10,9 +10,9 @@
 
 ## 現在の状態
 
-- 完了ステップ: Step 0〜10(分野01・分野02完了)
-- 次のステップ: Step 11 `03_filesystem_storage/01_vfs_basics.md`
-  (VFS抽象化層)から着手する
+- 完了ステップ: Step 0〜11(分野01・分野02完了、分野03に着手)
+- 次のステップ: Step 12 `03_filesystem_storage/02_ext4_xfs_journaling.md`
+  (ジャーナリングファイルシステム)から着手する
 
 ---
 
@@ -265,3 +265,33 @@
   pidfd系(pidfd_open 5.3以降)の版表記も基準版manで再確認。シグナルフレーム
   の詳細(SA_RESTORER、踏み台の実装がglibc側にある点)は簡略化して記述した。
 - 次のステップ: Step 11 `03_filesystem_storage/01_vfs_basics.md`
+
+## Step 11: `03_filesystem_storage/01_vfs_basics.md` (完了日: 2026-07-17)
+
+- 完了内容: 分野03の最初の章。「共通の注文票(契約)」を軸に、ファイル
+  システム=データの並べ方の流儀→VFS=インタフェースと実装の分離、
+  4大オブジェクト(superblock/inode/dentry/file)と関数ポインタの操作表、
+  疑似ファイルシステム(=「すべてはファイル」の実現機構、Step 4回収)、
+  fd→struct file→inodeの三層(Step 6の読み書き位置共有の宿題回収)、
+  unlinkと参照カウント(rmは名前を消すだけ)、dentry/dcacheとパス解決
+  (負のdentry、シンボリックリンク読み替え・マウント乗り換え=Step 4の
+  接ぎ木の機構的回収)、openの一部始終(検査はopen時に一度だけの機構)、
+  read/writeとページキャッシュ(Step 8宿題回収、writeの遅延書き戻しと
+  fsync、mmapとの統一)、superblockとmountの内部を執筆。
+- 決定事項: (1) glossaryへ登録: dentry、tmpfs、VFS、オープンファイル記述、
+  疑似ファイルシステム、スーパーブロック、パス解決、ファイルシステム。
+  標準表記: Linux文脈は「struct file」/POSIX一般論は「オープンファイル
+  記述」(task_struct/PCBと同じ使い分けパターン)。(2) VFS inodeは
+  「メモリ上の共通形式」とし、ディスク上のinode構造・ブロック管理・
+  ハードリンクはStep 13に委ねた。(3) ライトバック/ダーティの正式な
+  glossary登録と整合性の議論(ジャーナリング)はStep 12に委ね、本章は
+  「fsyncの存在理由」までで止めた。(4) マウントネームスペースは分野05、
+  ソケット等のfile化の詳細は分野04に委譲。address_space_operationsの
+  名称は本文に出さず「汎用実装がページキャッシュを引く」の粒度に抑えた。
+- 未解決・要検証事項: vfs.rst / path-lookup.rst / tmpfs.rst のパスは
+  Linux 7.0で要確認(6.x系に基づく)。/proc/sys/fs/dentry-state の
+  フィールド構成(負のdentry数の列位置)はman 5 procで要再確認。
+  実行例の time cat の数値・free/findmnt出力はUbuntu 26.04実機で要検証。
+  ulimit -n の既定値(1024と記載)も実機で要確認。RCU-walk/ref-walkは
+  存在の言及のみに抑えた(深掘りするなら発展として別途)。
+- 次のステップ: Step 12 `03_filesystem_storage/02_ext4_xfs_journaling.md`

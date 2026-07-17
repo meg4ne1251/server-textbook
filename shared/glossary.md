@@ -52,6 +52,16 @@
 - **関連一次情報源**: カーネルドキュメント(Documentation/scheduler/sched-design-CFS.rst)
 - **関連用語**: EEVDF、vruntime、スケジューラ、nice値
 
+### dentry(directory entry / ディレクトリエントリ)
+
+- **定義**: パス名の1成分、すなわち「この名前はこの inode を指す」という
+  対応1件をメモリ上に持つ VFS のオブジェクト。集合体は dcache
+  (dentry cache)と呼ばれ、パス解決のディスク I/O を省く。存在しない
+  名前も「負の dentry」としてキャッシュされ、ENOENT の応答を高速化する
+- **初出章**: `03_filesystem_storage/01_vfs_basics.md`
+- **関連一次情報源**: カーネルドキュメント(Documentation/filesystems/vfs.rst)
+- **関連用語**: VFS、inode、パス解決
+
 ### EEVDF(Earliest Eligible Virtual Deadline First)
 
 - **定義**: Linux 6.6 以降の fair クラスの標準スケジューリングアルゴリズム。
@@ -284,6 +294,17 @@
   (コストの文脈での先出しは `02_process_kernel/02_syscall_context_switch.md`)
 - **関連用語**: MMU、ページテーブル、コンテキストスイッチ
 
+### tmpfs
+
+- **定義**: ファイルの実体をディスクではなくメモリ(ページキャッシュ)
+  だけに持つファイルシステム。高速だが再起動で消える。`/run` や
+  `/dev/shm`(POSIX 共有メモリの実体)に使われる。中身は物理メモリ
+  (+スワップ)を消費する点に運用上の注意がある
+- **初出章**: `03_filesystem_storage/01_vfs_basics.md`
+  (POSIX 共有メモリの文脈での先出しは `02_process_kernel/05_signals_ipc.md`)
+- **関連一次情報源**: カーネルドキュメント(Documentation/filesystems/tmpfs.rst)
+- **関連用語**: 疑似ファイルシステム、ページキャッシュ、共有メモリ
+
 ### UID / GID(User ID / Group ID)
 
 - **定義**: カーネルがユーザー・グループを識別する番号。プロセスは身分証として
@@ -323,6 +344,17 @@
 - **初出章**: `02_process_kernel/02_syscall_context_switch.md`
 - **関連一次情報源**: `man 7 vdso`
 - **関連用語**: システムコール、共有ライブラリ、アドレス空間
+
+### VFS(Virtual File System / 仮想ファイルシステム)
+
+- **定義**: ファイル系システムコールと個々のファイルシステム実装の間に
+  立つカーネル内の抽象化層。共通のオブジェクトモデル(superblock /
+  inode / dentry / file)と関数ポインタの操作表(契約)を定め、
+  アプリケーションが実装の違いを知らずに済むようにする。
+  「すべてはファイル」の実現機構
+- **初出章**: `03_filesystem_storage/01_vfs_basics.md`
+- **関連一次情報源**: カーネルドキュメント(Documentation/filesystems/vfs.rst)
+- **関連用語**: inode、dentry、スーパーブロック、オープンファイル記述
 
 ### vruntime(仮想ランタイム / virtual runtime)
 
@@ -386,6 +418,17 @@
 - **初出章**: `02_process_kernel/03_virtual_memory.md`
 - **関連一次情報源**: カーネルドキュメント(Documentation/mm/overcommit-accounting.rst)
 - **関連用語**: OOM killer、デマンドページング、VMA
+
+### オープンファイル記述(open file description / struct file)
+
+- **定義**: 「あるファイルを open した1回分」を表す層。読み書き位置・
+  アクセスモード・参照カウントを持つ。fd はこれへの参照(番号)にすぎず、
+  fork や dup では fd テーブル側だけが複製されるため、読み書き位置は
+  複数の fd・親子プロセス間で共有されうる。本文の標準表記は Linux の
+  文脈では「struct file」、POSIX 一般論では「オープンファイル記述」とする
+- **初出章**: `03_filesystem_storage/01_vfs_basics.md`
+- **関連一次情報源**: POSIX(IEEE Std 1003.1)、`man 2 open`(NOTES)
+- **関連用語**: ファイルディスクリプタ、inode、VFS
 
 ### 親プロセス / 子プロセス(parent / child process)
 
@@ -459,6 +502,16 @@
   `02_process_kernel/01_process_thread_basics.md` で扱う
 - **初出章**: `01_intro/02_shell_and_commands.md`
 - **関連用語**: PATH、シェル
+
+### 疑似ファイルシステム(pseudo filesystem)
+
+- **定義**: 裏にディスク等のデバイスを持たず、VFS の契約(操作の表)だけを
+  満たすファイルシステムの総称(/proc、/sys、tmpfs 等)。read されるたびに
+  カーネルが中身をその場で生成するものが多く、stat のサイズが 0 でも
+  読める。`/proc/filesystems` で nodev と表示される
+- **初出章**: `03_filesystem_storage/01_vfs_basics.md`
+- **関連一次情報源**: `man 5 proc`、カーネルドキュメント(Documentation/filesystems/)
+- **関連用語**: VFS、tmpfs、マウント
 
 ### クライアント(client)
 
@@ -599,6 +652,16 @@
 - **初出章**: `01_intro/02_shell_and_commands.md`
 - **関連一次情報源**: POSIX(IEEE Std 1003.1)
 - **関連用語**: シェル、プロセス
+
+### スーパーブロック(superblock)
+
+- **定義**: マウントされたファイルシステム1つ分の台帳となる VFS の
+  オブジェクト。ブロックサイズ、ルートディレクトリの inode、空き容量の
+  勘定、ダーティな inode の一覧などを持つ。mount はデバイスから
+  スーパーブロックを組み立て、その根をディレクトリツリーに接ぎ木する操作
+- **初出章**: `03_filesystem_storage/01_vfs_basics.md`
+- **関連一次情報源**: カーネルドキュメント(Documentation/filesystems/vfs.rst)
+- **関連用語**: VFS、マウント、inode
 
 ### スケジューラ(scheduler)
 
@@ -758,6 +821,19 @@
 - **関連一次情報源**: `man 1 dpkg`、`man 8 apt`
 - **関連用語**: パッケージ、リポジトリ、依存関係
 
+### パス解決(path resolution / path walk)
+
+- **定義**: パス名の文字列から目的の inode へ、根(または起点の
+  ディレクトリ)から1成分ずつ表引きでたどり着く VFS の処理。ほぼすべての
+  ファイル系システムコールの前段で走る。途中で各ディレクトリの x 権限を
+  検査し、シンボリックリンクの読み替えとマウントの縫い目の乗り換えを行う。
+  dcache により大半はディスク I/O なしで完了する
+- **初出章**: `03_filesystem_storage/01_vfs_basics.md`
+  (原理の先出しは `01_intro/03_filesystem_hierarchy_permissions.md`)
+- **関連一次情報源**: `man 7 path_resolution`、
+  カーネルドキュメント(Documentation/filesystems/path-lookup.rst)
+- **関連用語**: dentry、inode、マウント、シンボリックリンク
+
 ### パイプ(pipe)
 
 - **定義**: あるプロセスの標準出力を別のプロセスの標準入力に直結する、
@@ -807,6 +883,17 @@
 - **初出章**: `01_intro/04_package_and_system_layout.md`
 - **関連一次情報源**: UEFI Specification(UEFI Forum)、`man 7 boot`
 - **関連用語**: ブートローダ
+
+### ファイルシステム(filesystem)
+
+- **定義**: ストレージ上にファイルの中身・名前の一覧・空き領域の記録を
+  どう並べるかという「データの並べ方の流儀」、およびその実装(ext4、XFS、
+  tmpfs 等)。VFS の契約(操作の表)を満たして登録され、アプリケーション
+  からは違いが見えない。ディスクを持たないものは疑似ファイルシステムと呼ぶ
+- **初出章**: `03_filesystem_storage/01_vfs_basics.md`
+  (語としての先出しは `01_intro/03_filesystem_hierarchy_permissions.md`)
+- **関連一次情報源**: カーネルドキュメント(Documentation/filesystems/)
+- **関連用語**: VFS、マウント、inode、疑似ファイルシステム
 
 ### ファイルディスクリプタ(file descriptor / fd)
 
