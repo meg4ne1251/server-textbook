@@ -10,9 +10,9 @@
 
 ## 現在の状態
 
-- 完了ステップ: Step 0〜12(分野01・分野02完了、分野03は2章まで完了)
-- 次のステップ: Step 13 `03_filesystem_storage/03_inode_block_management.md`
-  (inode、ブロック管理)から着手する
+- 完了ステップ: Step 0〜13(分野01・分野02完了、分野03は3章まで完了)
+- 次のステップ: Step 14 `03_filesystem_storage/04_lvm_raid.md`
+  (LVM、RAID)から着手する
 
 ---
 
@@ -328,3 +328,31 @@
   ext4のerrors=既定(Ubuntuルートはremount-ro)は実機のtune2fs -lで要検証。
   QEMUのcache=unsafeの言及は分野05で正式に扱う際に再確認。
 - 次のステップ: Step 13 `03_filesystem_storage/03_inode_block_management.md`
+
+## Step 13: `03_filesystem_storage/03_inode_block_management.md` (完了日: 2026-07-19)
+
+- 完了内容: 章の軸を「マッピング(inodeはどう中身を指すか)」と「割り当て
+  (どこに書くかを決める)」の2問に設定。ブロックグループ(128MiB、局所性、
+  flex_bg)、間接ブロック(ext2/3)→エクステント(L,N,P・inode内4件・B木)、
+  unwritten(Step 12宿題回収、fallocate)、スパースファイル、mballoc・
+  遅延割り当て(前章のrename 0バイト問題の背景を回収)、ディスク上inode
+  (256バイト、i_block 60バイトの可変用途、fast symlink)、inode総数の
+  mkfs時固定とdf -i、ディレクトリエントリ・htree・削除の跡地併合、
+  ハードリンク(Step 4/11宿題回収、EXDEV・ディレクトリ不可の理由)、
+  孤児リスト、XFS対比(AG・B+木2本・動的inode)を執筆。
+- 決定事項: (1) glossaryへ登録: エクステント、間接ブロック、スパース
+  ファイル、遅延割り当て、ハードリンク、ブロックグループ。(2) 定型
+  「遅らせると、まとめられて、賢く決められる」を導入(デマンドページング・
+  ライトバック・遅延ロギング・遅延割り当てを貫く反復原理として明示)。
+  (3) 「rmは名前を消すだけ」をディスクレベルで完結(rec_len併合で名前すら
+  残る)。(4) buddy/mballocの内部詳細・e4defragの手順・inline_data機能の
+  詳細は深追いせず不掲載。ビットマップは一般語のためglossary登録せず。
+- 未解決・要検証事項: inode既定サイズ256バイト・bytes-per-inode既定
+  16KiB(mke2fs.conf)は現行e2fsprogsで要確認。flex_bg既定16グループ、
+  エクステント1件上限32768ブロック、htree実用上最大2段(3段対応
+  largedirの有無)はLinux 7.0のext4文書で要確認。ext4の孤児リストは
+  従来のスーパーブロック起点リストとorphan_file機能(新しめ)のどちらを
+  基準にするか要確認(本文は従来方式ベースの簡略記述)。filefrag -v・
+  stat・df -iの出力形式はUbuntu 26.04実機で要検証。XFSの動的inode
+  割り当て・B+木2本(bnobt/cntbt)の名称は本文に出さず概念のみとした。
+- 次のステップ: Step 14 `03_filesystem_storage/04_lvm_raid.md`
