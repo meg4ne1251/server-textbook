@@ -10,9 +10,9 @@
 
 ## 現在の状態
 
-- 完了ステップ: Step 0〜11(分野01・分野02完了、分野03に着手)
-- 次のステップ: Step 12 `03_filesystem_storage/02_ext4_xfs_journaling.md`
-  (ジャーナリングファイルシステム)から着手する
+- 完了ステップ: Step 0〜12(分野01・分野02完了、分野03は2章まで完了)
+- 次のステップ: Step 13 `03_filesystem_storage/03_inode_block_management.md`
+  (inode、ブロック管理)から着手する
 
 ---
 
@@ -295,3 +295,36 @@
   ulimit -n の既定値(1024と記載)も実機で要確認。RCU-walk/ref-walkは
   存在の言及のみに抑えた(深掘りするなら発展として別途)。
 - 次のステップ: Step 12 `03_filesystem_storage/02_ext4_xfs_journaling.md`
+
+## Step 12: `03_filesystem_storage/02_ext4_xfs_journaling.md` (完了日: 2026-07-19)
+
+- 完了内容: 前章の宿題「書き戻し途中の電源断でFSは壊れないのか」を回収。
+  1操作=複数ブロック更新とディスクの原子性の限界→クラッシュ整合性問題、
+  fsck全数調査の限界→ジャーナリング(WAL)、「印(コミットレコード)の
+  ない日誌はなかったことにする」を背骨に、順序保証(フラッシュ/FUA)、
+  data=3モードとorderedの根拠(古いデータの露出)、整合性vs耐久性
+  (fsyncとの役割分担)、jbd2内部(inode 8、handle/トランザクションの
+  相乗り、コミット7手順、revoke、リカバリ3パス)、XFS(論理ロギング、
+  遅延ロギングCIL/AIL、intentロギング)、fsck存続の理由、CoW方式への
+  言及を執筆。
+- 決定事項: (1) glossaryへ登録: ext4、fsck、jbd2、XFS、クラッシュ整合性、
+  ジャーナリング、ダーティ、チェックポイント、トランザクション、
+  ライトバック(Step 11から持ち越したダーティ/ライトバックの正式登録を
+  ここで実施)。標準表記:「ジャーナル(日誌)」「コミットレコード」
+  「チェックポイント」「再生(replay)」「相乗り」(handleのバッチング)。
+  (2) 定型を2つ導入:「印のない日誌は、なかったことにする」
+  「ジャーナリングが守るのは『矛盾しないこと』であって『消えないこと』
+  ではない」。(3) 未書き込み(unwritten)エクステントは言及のみ、
+  詳細はStep 13(エクステント)で扱う。btrfs/ZFSのCoW方式は対比の言及
+  のみで本書の範囲外と明記。(4) ディスク上の台帳の詳細な配置
+  (ビットマップ、ブロックグループ等)はStep 13に委ねた。
+- 未解決・要検証事項: ジャーナル既定サイズ「数十MiB〜1GiB程度で自動決定」
+  は現行e2fsprogsで要確認(実行例のJournal size: 1024Mも実機で要検証)。
+  /proc/fs/jbd2/<dev>-8/infoの出力フィールドはLinux 7.0で要確認(6.x系に
+  基づく)。XFSのnobarrier削除をLinux 4.19と記載——正確な版は要確認。
+  遅延ロギングの版(2.6.39既定化、3.3以降唯一)も要再確認。
+  journalling.rst / admin-guide/ext4.rst / admin-guide/xfs.rst のパスは
+  Linux 7.0で要確認。auto_da_allocの現行の既定有効を`man 5 ext4`で要確認。
+  ext4のerrors=既定(Ubuntuルートはremount-ro)は実機のtune2fs -lで要検証。
+  QEMUのcache=unsafeの言及は分野05で正式に扱う際に再確認。
+- 次のステップ: Step 13 `03_filesystem_storage/03_inode_block_management.md`

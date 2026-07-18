@@ -95,6 +95,19 @@
 - **関連一次情報源**: `man 2 execve`、POSIX(IEEE Std 1003.1)
 - **関連用語**: fork、wait、プロセス
 
+### ext4(fourth extended filesystem)
+
+- **定義**: Ubuntu をはじめ多くのディストリビューションが標準採用する
+  Linux のジャーナリングファイルシステム。ジャーナリングは独立した
+  jbd2 層が担い、物理ロギング(更新後ブロックの丸ごと複製)方式をとる。
+  データの扱いは `data=` マウントオプションで journal / ordered(既定)/
+  writeback から選べる
+- **初出章**: `03_filesystem_storage/02_ext4_xfs_journaling.md`
+  (名前の先出しは `03_filesystem_storage/01_vfs_basics.md`)
+- **関連一次情報源**: `man 5 ext4`、カーネルドキュメント
+  (Documentation/admin-guide/ext4.rst、Documentation/filesystems/ext4/)
+- **関連用語**: jbd2、ジャーナリング、XFS、ファイルシステム
+
 ### FHS(Filesystem Hierarchy Standard / ファイルシステム階層標準)
 
 - **定義**: `/etc` `/var` `/usr` など主要ディレクトリの名前・役割・配置原理
@@ -123,6 +136,17 @@
   (依頼の3点セットとしての先出しは `01_intro/02_shell_and_commands.md`)
 - **関連一次情報源**: `man 2 fork`、`man 2 clone`、POSIX(IEEE Std 1003.1)
 - **関連用語**: exec、wait、コピーオンライト、プロセス
+
+### fsck(file system check)
+
+- **定義**: ファイルシステムの全台帳(inode、ビットマップ、ディレクトリ)を
+  突き合わせて矛盾を検出・修復するツール群の総称(ext4 系の実体は e2fsck)。
+  所要時間はディスクの中身の量に比例する。ジャーナリングの普及により
+  起動時の常用からは退いたが、ハードウェア故障やバグ由来の「ジャーナルの
+  モデル外」の破損に対する最後の手段として存続している
+- **初出章**: `03_filesystem_storage/02_ext4_xfs_journaling.md`
+- **関連一次情報源**: `man 8 fsck`、`man 8 e2fsck`
+- **関連用語**: ジャーナリング、ファイルシステム、スーパーブロック
 
 ### futex(Fast Userspace muTEX)
 
@@ -165,6 +189,17 @@
 - **関連一次情報源**: `man 7 pipe`、`man 7 shm_overview`、`man 7 unix`、
   POSIX(IEEE Std 1003.1)
 - **関連用語**: パイプ、共有メモリ、UNIXドメインソケット、シグナル
+
+### jbd2(Journaling Block Device 2)
+
+- **定義**: ext4 のジャーナリングを担う、カーネル内の独立した層
+  (fs/jbd2/)。システムコール1回分の原子性の単位(handle)を1つの
+  トランザクションに相乗りさせ、既定5秒ごと・fsync 時・領域不足時に
+  コミットする。日誌の実体は通常 inode 8 の隠しファイル(循環ログ)
+- **初出章**: `03_filesystem_storage/02_ext4_xfs_journaling.md`
+- **関連一次情報源**: カーネルドキュメント
+  (Documentation/filesystems/journalling.rst)
+- **関連用語**: ext4、ジャーナリング、トランザクション、チェックポイント
 
 ### mmap
 
@@ -388,6 +423,18 @@
 - **関連一次情報源**: `man 2 wait`、POSIX(IEEE Std 1003.1)
 - **関連用語**: fork、終了ステータス、ゾンビプロセス
 
+### XFS
+
+- **定義**: 大容量ストレージとメタデータ操作の並列性に強い Linux の
+  ジャーナリングファイルシステム(RHEL 系の標準)。日誌は常にメタデータ
+  のみで、変更内容を細粒度で記録する論理ロギングと、メモリ上(CIL)で
+  変更をまとめてから書く遅延ロギングを用いる。未書き込み(unwritten)
+  エクステントにより古いデータの露出を防ぐ
+- **初出章**: `03_filesystem_storage/02_ext4_xfs_journaling.md`
+  (名前の先出しは `03_filesystem_storage/01_vfs_basics.md`)
+- **関連一次情報源**: カーネルドキュメント(Documentation/admin-guide/xfs.rst)
+- **関連用語**: ext4、ジャーナリング、ファイルシステム
+
 ## あ行
 
 ### アドレス空間(address space)
@@ -529,6 +576,17 @@
 - **関連一次情報源**: POSIX(IEEE Std 1003.1)Shell Command Language
 - **関連用語**: シェル
 
+### クラッシュ整合性(crash consistency)
+
+- **定義**: 電源断やクラッシュがどの瞬間に起きても、ファイルシステムの
+  台帳どうし(inode、ビットマップ、ディレクトリ等)が矛盾しない状態を
+  保てるという性質、およびそれをどう保証するかという問題。1つの操作が
+  複数ブロックの更新からなるのに、ディスクの原子的な書き込み単位は
+  1ブロック程度でしかないことから生じる。解法がジャーナリング(WAL)や
+  コピーオンライト方式(btrfs / ZFS)
+- **初出章**: `03_filesystem_storage/02_ext4_xfs_journaling.md`
+- **関連用語**: ジャーナリング、fsck、トランザクション
+
 ### 共有ライブラリ(shared library)
 
 - **定義**: 多数のプログラムが共通で使う機能(例: glibcのlibc.so.6)を1つの
@@ -644,6 +702,20 @@
 - **初出章**: `01_intro/01_server_os_kernel_overview.md`
 - **関連用語**: カーネル、ユーザーランド
 
+### ジャーナリング(journaling)
+
+- **定義**: 複数ブロックにまたがる更新を行う前に、その内容を日誌
+  (ジャーナル)というディスク上の専用領域へ先に書き、コミットレコードで
+  完結の印を付けてから実物の台帳に反映する方式。データベース由来の
+  ログ先行書き込み(WAL: Write-Ahead Logging)の応用。クラッシュ後は
+  「印のない日誌は破棄、印のある日誌は再生(冪等)」により、ジャーナル
+  サイズに比例する時間で一貫した状態へ復帰できる。守るのは構造の整合性で
+  あって直前データの耐久性ではない(耐久性は fsync の領分)
+- **初出章**: `03_filesystem_storage/02_ext4_xfs_journaling.md`
+- **関連一次情報源**: カーネルドキュメント
+  (Documentation/filesystems/journalling.rst)
+- **関連用語**: クラッシュ整合性、トランザクション、チェックポイント、jbd2
+
 ### 終了ステータス(exit status)
 
 - **定義**: プロセスが終了時に親プロセスへ残す0〜255の数値。POSIXの慣例で
@@ -747,6 +819,27 @@
 - **初出章**: `01_intro/02_shell_and_commands.md`
 - **関連用語**: シェル
 
+### ダーティ(dirty)
+
+- **定義**: ページキャッシュ上の内容がディスク上の内容より新しい
+  (書き込まれたがまだ書き戻されていない)状態を示す印。write は
+  ページキャッシュに書いてダーティ印を付けるだけで即座に戻り、
+  実際のディスク反映(ライトバック)は後から非同期に行われる。
+  ダーティなデータは電源断で失われる——fsync が存在する理由
+- **初出章**: `03_filesystem_storage/02_ext4_xfs_journaling.md`
+  (概念の先出しは `03_filesystem_storage/01_vfs_basics.md`)
+- **関連用語**: ページキャッシュ、ライトバック、ジャーナリング
+
+### チェックポイント(checkpoint)
+
+- **定義**: ジャーナリングにおいて、日誌へのコミットが済んだ更新を、
+  実物の台帳(ディスク上の本来の位置)へ書き戻す処理。これが済んだ
+  トランザクションの日誌領域は回収され、循環ログとして使い回される。
+  「日誌に書く→実物に反映(チェックポイント)→日誌を回収」が
+  ジャーナリングの基本サイクル
+- **初出章**: `03_filesystem_storage/02_ext4_xfs_journaling.md`
+- **関連用語**: ジャーナリング、トランザクション、jbd2
+
 ### ディストリビューション(distribution)
 
 - **定義**: Linuxカーネルに、選定されたユーザーランドのプログラム群・管理ツールを
@@ -772,6 +865,16 @@
 - **初出章**: `02_process_kernel/03_virtual_memory.md`
 - **関連一次情報源**: カーネルドキュメント(Documentation/admin-guide/mm/concepts.rst)
 - **関連用語**: ページフォールト、VMA、mmap、オーバーコミット
+
+### トランザクション(transaction)
+
+- **定義**: 「全部成功するか、全く行われないか」(原子性)を保証したい
+  一連の更新のまとまり。ファイルシステムの文脈では、1つの操作が更新する
+  複数ブロック(あるいは jbd2 のように相乗りした多数の操作)を指し、
+  日誌上のコミットレコード1ブロックの書き込み成否がトランザクション
+  全体の成立/不成立を決める
+- **初出章**: `03_filesystem_storage/02_ext4_xfs_journaling.md`
+- **関連用語**: ジャーナリング、チェックポイント、クラッシュ整合性
 
 ### 特権レベル(privilege level / ring)
 
@@ -1018,6 +1121,19 @@
   広義のOSを構成する
 - **初出章**: `01_intro/01_server_os_kernel_overview.md`
 - **関連用語**: カーネル、カーネル空間 / ユーザー空間、ディストリビューション
+
+### ライトバック(writeback / 書き戻し)
+
+- **定義**: ページキャッシュ上のダーティなページを、カーネルのスレッドが
+  後から非同期にディスクへ書き戻す処理。write システムコールが即座に
+  戻れるのはこの遅延のおかげで、同じページへの連打の集約・連続書き込みの
+  まとめ書きという効率も得る。代償として書き戻し前の電源断でデータが
+  失われるため、確定が必要な地点では fsync で強制する
+- **初出章**: `03_filesystem_storage/02_ext4_xfs_journaling.md`
+  (概念の先出しは `03_filesystem_storage/01_vfs_basics.md`)
+- **関連一次情報源**: `man 2 fsync`、カーネルドキュメント
+  (Documentation/admin-guide/mm/concepts.rst)
+- **関連用語**: ダーティ、ページキャッシュ、ジャーナリング
 
 ### ランキュー(run queue / rq)
 
