@@ -625,6 +625,18 @@
 - **関連一次情報源**: `man 7 vdso`
 - **関連用語**: システムコール、共有ライブラリ、アドレス空間
 
+### veth(virtual Ethernet pair / veth ペア)
+
+- **定義**: 必ず2枚1組で作られる仮想ネットワークデバイス。片方への
+  送信がそのまま相方の受信になる(実装は skb を相方の受信キューへ積んで
+  NET_RX softirq を上げるだけで、物理的な配線・信号は存在しない)。
+  ペアの片割れを別のネットワークネームスペースへ移すことで、境界を
+  またぐ仮想の直結ケーブルとして使う。ブリッジと組み合わせるのが
+  コンテナネットワークの標準構成
+- **初出章**: `04_linux_network_stack/03_network_namespaces.md`
+- **関連一次情報源**: `man 4 veth`、Linuxカーネルソース(drivers/net/veth.c)
+- **関連用語**: ネットワークネームスペース、ブリッジ、sk_buff
+
 ### VFS(Virtual File System / 仮想ファイルシステム)
 
 - **定義**: ファイル系システムコールと個々のファイルシステム実装の間に
@@ -1265,6 +1277,33 @@
 
 ## な行
 
+### ネームスペース(namespace)
+
+- **定義**: カーネルが管理するグローバルな資源(ネットワークスタック、
+  マウントの一覧、PID の空間、ホスト名など)を「見え方の集合」に包み、
+  プロセスのグループごとに独立した眺めを与える仕組みの総称。所属は
+  task_struct → nsproxy でたどられ、fork した子は親の眺めを引き継ぐ。
+  cgroups と並ぶコンテナの土台で、全体像は分野05
+  (`05_virtualization_containers/01_cgroups_namespaces.md`)で扱う
+- **初出章**: `04_linux_network_stack/03_network_namespaces.md`
+  (ネットワーク以外の種類は分野05が主)
+- **関連一次情報源**: `man 7 namespaces`
+- **関連用語**: ネットワークネームスペース、task_struct、プロセス
+
+### ネットワークネームスペース(network namespace / netns)
+
+- **定義**: ネットワークスタック一式——デバイス一覧(lo 含む)、
+  IP アドレス、ルーティング表、netfilter のルールセット、conntrack の
+  台帳、ソケットとポート番号の空間、`net.*` の sysctl——を1単位として
+  複製するネームスペース。実体はカーネル内の `struct net` で、ホスト
+  本来のスタックも init_net という1インスタンスにすぎない。部分共有は
+  なく、1つのデバイスは常にどれか1つのネームスペースに属する。
+  ソケットは作成時のネームスペースに固定される
+- **初出章**: `04_linux_network_stack/03_network_namespaces.md`
+- **関連一次情報源**: `man 7 network_namespaces`、`man 8 ip-netns`、
+  Linuxカーネルソース(include/net/net_namespace.h)
+- **関連用語**: ネームスペース、veth、ブリッジ、netfilter、コネクション追跡
+
 ### ノンブロッキングI/O(non-blocking I/O)
 
 - **定義**: 読み書きの準備ができていないとき、眠る代わりに即座に
@@ -1494,6 +1533,19 @@
 - **初出章**: `01_intro/04_package_and_system_layout.md`
 - **関連一次情報源**: `man 7 boot`
 - **関連用語**: ファームウェア、initramfs、カーネル
+
+### ブリッジ(bridge / Linux bridge)
+
+- **定義**: カーネル内のソフトウェア実装による L2 スイッチ。ブリッジ
+  デバイス(br0 等)を作り、veth や物理 NIC を「ポート」として挿すと、
+  MAC アドレスの学習(FDB)に基づいてポート間でフレームを転送する。
+  多数のネームスペースを束ねる集線装置として、コンテナネットワークの
+  標準部品(docker0 等)。L2 スイッチングの動作原理そのものは
+  network-guide が主
+- **初出章**: `04_linux_network_stack/03_network_namespaces.md`
+- **関連一次情報源**: `man 8 ip-link`(bridge タイプ)、
+  Linuxカーネルソース(net/bridge/)
+- **関連用語**: veth、ネットワークネームスペース、NAT
 
 ### ブロックグループ(block group)
 

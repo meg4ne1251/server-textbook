@@ -10,9 +10,9 @@
 
 ## 現在の状態
 
-- 完了ステップ: Step 0〜17(分野01・分野02・分野03完了、分野04進行中)
-- 次のステップ: Step 18 `04_linux_network_stack/03_network_namespaces.md`
-  (ネットワークネームスペース)から着手する
+- 完了ステップ: Step 0〜18(分野01・分野02・分野03完了、分野04進行中)
+- 次のステップ: Step 19 `04_linux_network_stack/04_qdisc_traffic_control.md`
+  (tc/qdiscのパケットスケジューリング)から着手する
 
 ---
 
@@ -482,3 +482,37 @@
   static_key 実装に基づく簡略記述(詳細は本文に出さず)。
   reject(ICMP エラーの種別選択)の詳細は分野07で必要なら展開。
 - 次のステップ: Step 18 `04_linux_network_stack/03_network_namespaces.md`
+
+## Step 18: `04_linux_network_stack/03_network_namespaces.md` (完了日: 2026-07-19)
+
+- 完了内容: 章の軸を「仮想メモリの型の再演——スタック一式の複製を作り、
+  プロセスごとに眺めを差し替える」に設定。複製されるもの一覧を前2章の
+  登場人物に対応づけ(部分共有なしの設計理由=検問所・台帳・ルーティングの
+  連携の整合性)、veth ペア(パイプの再演)、ブリッジ(カーネル内 L2
+  スイッチ)、ホストをルータとする外部接続(=コンテナ標準構成の正体)、
+  struct net / init_net / nsproxy、ソケットの所属は作成時固定、生成
+  (clone/unshare/setns)と寿命(fd・/proc/PID/ns/net・bind mount、
+  ip netns add の実装)、veth 内部(送信=相方の受信、NET_RX)、
+  通し稽古(ns 内から masquerade 経由で外へ、複数 ns の検問所を順に
+  通る)、実行例(新品 ns の空っぽ確認、8080 の2重 listen、inode 識別)、
+  VXLAN への橋渡し(network-guide 参照)を執筆。
+- 決定事項: (1) glossaryへ登録: veth、ネームスペース、ネットワーク
+  ネームスペース、ブリッジ。(2) ネームスペース一般(7種の列挙、user ns、
+  cgroup ns 等)は深追いせず分野05に委譲——本章は net ns のみ。
+  (3) 調査の大原則「観察コマンドは見たいスタックの中で実行する」を定型と
+  して導入。(4) network-guide 相互参照2件: L2 スイッチング原理は
+  `../../network-guide/02_vlan_vxlan_evpn/01_vlan_basics.md`、VXLAN は
+  同 `03_vxlan_fundamentals.md`(ホスト内=ns で分割/ホスト跨ぎ=VXLAN で
+  延伸、ブリッジに挿せる同列のデバイスという整理)。(5) 抽象 UNIX
+  ドメインソケットが net ns 管轄である点は発展の言及のみ。Docker 固有の
+  実装(docker0 等)は「正体の例」として名前のみ、詳細は分野05。
+- 未解決・要検証事項: ネットワークネームスペースの導入版「2.6.24
+  (2008年)から段階的に」・マウント ns の「2.4.19」は man 7
+  namespaces(6.x系)に基づく——記述の粒度は要再確認。新品 ns の lo が
+  DOWN で始まる挙動・ip netns exec の /etc/netns/<name>/resolv.conf
+  重ねマウント・/run/netns の bind mount の実体は Ubuntu 26.04 実機で
+  要検証。veth の実装記述(相方の受信キューへ積み NET_RX を上げる)は
+  簡略化——XDP 対応後の veth_xmit の詳細経路は本文に出していない。
+  実行例の ss 出力・net:[inode] の値は実機で要検証。ns 破棄時の物理 NIC
+  の init_net への帰還は要実機確認(veth は消える)。
+- 次のステップ: Step 19 `04_linux_network_stack/04_qdisc_traffic_control.md`
