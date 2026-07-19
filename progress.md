@@ -10,9 +10,9 @@
 
 ## 現在の状態
 
-- 完了ステップ: Step 0〜13(分野01・分野02完了、分野03は3章まで完了)
-- 次のステップ: Step 14 `03_filesystem_storage/04_lvm_raid.md`
-  (LVM、RAID)から着手する
+- 完了ステップ: Step 0〜14(分野01・分野02完了、分野03は4章まで完了)
+- 次のステップ: Step 15 `03_filesystem_storage/05_network_storage.md`
+  (NFS/iSCSI基礎)から着手する
 
 ---
 
@@ -356,3 +356,34 @@
   stat・df -iの出力形式はUbuntu 26.04実機で要検証。XFSの動的inode
   割り当て・B+木2本(bnobt/cntbt)の名称は本文に出さず概念のみとした。
 - 次のステップ: Step 14 `03_filesystem_storage/04_lvm_raid.md`
+
+## Step 14: `03_filesystem_storage/04_lvm_raid.md` (完了日: 2026-07-19)
+
+- 完了内容: 章の軸を「ブロックの世界にも翻訳表を挟む」(Step 8 の仮想メモリの
+  型の再演)に設定。ブロックデバイスの抽象と積み重ね(パーティション→
+  device mapper)、LVM 3層(PV/VG/LV、PE 4MiB、操作=翻訳表の書き換え、
+  方針はユーザーランド/機構はカーネル)、RAID レベルと XOR パリティの原理、
+  md と dm-raid の実装共有、dmsetup table の実物、LVM メタデータ(テキスト・
+  全PV複製)、スナップショット2方式(退避CoW / thin)、RMW ペナルティ、
+  縮退・再構築・URE・スクラブ、write hole(bitmap / journal / PPL)を執筆。
+- 決定事項: (1) glossaryへ登録: device mapper、LVM、md、RAID、
+  シンプロビジョニング、ストライピング、スナップショット、デグレード、
+  パーティション、パリティ、ブロックデバイス、ミラーリング。
+  (2) LVM の「エクステント」と ext4 のエクステントの用語衝突は、LVM 文脈を
+  「PE / LE」と表記して回避すると明文化。(3) 定型「層ごとの整合性は、
+  層ごとに自分で守る」を導入(write hole と ext4 ジャーナリングの守備範囲の
+  区別)。Step 5 の「initramfs が RAID を組み立てる」の伏線をトラブル
+  シューティングで回収。(4) bio・I/O スケジューラ等のブロック層内部は
+  本章では扱わず、必要になった時点で導入する方針(深追い回避)。
+  ハードウェアRAID の内部・btrfs/ZFS の統合型(FS+RAID)は言及のみ。
+- 未解決・要検証事項: PE 既定 4MiB・md チャンク既定 512KiB は現行の
+  lvm2 / mdadm で要確認。write-intent bitmap の「大きな配列では既定で有効」の
+  閾値(mdadm の既定)は要確認。--write-journal / PPL の導入カーネル版
+  (4.4 / 4.12 前後)は本文で版を出さずに回避——正確な版は要確認。
+  speed_limit_min/max の既定値は本文に数値を出していない。dmsetup table・
+  lvs -o seg_pe_ranges・/proc/mdstat の出力形式は Ubuntu 26.04 実機で要検証。
+  スナップショット(旧方式)のチャンクサイズ既定は断定を避けた。
+  Documentation/admin-guide/device-mapper/snapshot.rst のパスは Linux 7.0 で
+  要確認。ESP が素のパーティションである必要の記述は UEFI 仕様ベースの
+  一般論として記載。
+- 次のステップ: Step 15 `03_filesystem_storage/05_network_storage.md`
