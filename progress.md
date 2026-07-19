@@ -10,9 +10,9 @@
 
 ## 現在の状態
 
-- 完了ステップ: Step 0〜18(分野01・分野02・分野03完了、分野04進行中)
-- 次のステップ: Step 19 `04_linux_network_stack/04_qdisc_traffic_control.md`
-  (tc/qdiscのパケットスケジューリング)から着手する
+- 完了ステップ: Step 0〜19(分野01・分野02・分野03・分野04完了)
+- 次のステップ: Step 20 `05_virtualization_containers/01_cgroups_namespaces.md`
+  (cgroups/namespacesの理論)から着手する
 
 ---
 
@@ -516,3 +516,36 @@
   実行例の ss 出力・net:[inode] の値は実機で要検証。ns 破棄時の物理 NIC
   の init_net への帰還は要実機確認(veth は消える)。
 - 次のステップ: Step 19 `04_linux_network_stack/04_qdisc_traffic_control.md`
+
+## Step 19: `04_linux_network_stack/04_qdisc_traffic_control.md` (完了日: 2026-07-19)
+
+- 完了内容: 分野04の最終章。章の軸を「行列は唯一の采配の場所」と
+  「機構(enqueue/dequeue)と方針(qdisc)の分離=分野02の再演」に設定。
+  CPU との差分2点(横取り不可・破棄は正当な合図)、クラスレス/クラスフル+
+  filter の木、トークンバケット(rate/burst)とシェーピング/ポリシング、
+  HTB(rate/ceil の保証+貸し借り)、公平キューイング(DRR、EEVDF 原論文の
+  系譜回収=Step 9)、bufferbloat と CoDel(滞留時間判定・先頭破棄)、
+  fq_codel が既定たる理由、dev_queue_xmit(送信者の CPU 時間で dequeue、
+  NET_TX の正体回収=Step 16)、mq、noqueue(veth=前章回収)、BQL、
+  ingress/clsact と netfilter ingress の境界(Step 17 回収)、実行例
+  (既定確認、netem 注射、tbf 統計)を執筆。
+- 決定事項: (1) glossaryへ登録: CoDel、fq_codel、HTB、qdisc、tc、
+  公平キューイング、シェーピング / ポリシング、トークンバケット、
+  バッファブロート。標準表記:「トークンバケット」「バッファブロート」
+  「シェーピング(整形)/ポリシング(取り締まり)」。(2) 定型を2つ導入:
+  「行列があるところにしか、采配の余地はない」「捨てることは失敗ではなく、
+  送信元への合図」。(3) 輻輳制御・ペーシングの詳細は範囲外を維持
+  (fq/BBR は発展の言及のみ)。eBPF は tc の取り付け点として言及のみ
+  (深掘りする章は未定)。ifb は迂回手段としての言及にとどめた。
+  (4) コンテナの帯域制限=veth への qdisc 付与の自動化、として分野05へ
+  橋渡し。分野04の4章の総括をまとめに記載。
+- 未解決・要検証事項: net.core.default_qdisc=fq_codel(systemd 由来)と
+  tc qdisc show の出力形式(mq 配下の fq_codel、noqueue)は Ubuntu 26.04
+  実機で要検証。fq_codel 既定値(limit 10240p / flows 1024 /
+  quantum 1514 / memory_limit 32Mb)と dev_tx_weight 既定 64、
+  txqueuelen 既定 1000 は 6.x 系に基づく——Linux 7.0 で要確認。
+  BQL 導入版 3.3・clsact の評価順(tc ingress が netfilter ingress より
+  先)は簡略記述。tbf の GSO 塊の扱い(内部でのセグメント化の有無)は
+  断定を避け「会計が粗くなる」の表現にとどめた。netem/tbf 実行例の
+  数値は例示であり実機で要検証。
+- 次のステップ: Step 20 `05_virtualization_containers/01_cgroups_namespaces.md`

@@ -63,6 +63,18 @@
 - **関連一次情報源**: `man 5 nfs`(DATA AND METADATA COHERENCE)
 - **関連用語**: NFS、ページキャッシュ、ダーティ
 
+### CoDel(Controlled Delay)
+
+- **定義**: 行列の長さではなくパケットの滞留時間(enqueue から
+  dequeue までの時間)を測り、最小滞留時間が target(5 ms)を
+  interval(100 ms)にわたって下回らなかったときだけ、行列の先頭から
+  パケットを捨て始めるキュー管理アルゴリズム。瞬間のバーストは容認し、
+  恒常的な滞留(bufferbloat)だけを罰することで、損失を送信元への
+  減速の合図として最速で届ける
+- **初出章**: `04_linux_network_stack/04_qdisc_traffic_control.md`
+- **関連一次情報源**: RFC 8289、`man 8 tc-codel`
+- **関連用語**: fq_codel、バッファブロート、qdisc、TCP
+
 ### dentry(directory entry / ディレクトリエントリ)
 
 - **定義**: パス名の1成分、すなわち「この名前はこの inode を指す」という
@@ -172,6 +184,18 @@
 - **関連一次情報源**: `man 2 fork`、`man 2 clone`、POSIX(IEEE Std 1003.1)
 - **関連用語**: exec、wait、コピーオンライト、プロセス
 
+### fq_codel(Fair Queueing Controlled Delay)
+
+- **定義**: フローごとの行列(既定 1024 本。4つ組等のハッシュで
+  振り分け)を DRR で公平に巡回し、各行列に CoDel を適用する qdisc。
+  バルク転送の遅延・損失はそのフロー自身に降りかかり、小さな対話
+  フローは他人の行列と無関係にすぐ順番が来る。公平と低遅延を同時に
+  実現する汎用の既定として、systemd が `net.core.default_qdisc` を
+  これに設定している
+- **初出章**: `04_linux_network_stack/04_qdisc_traffic_control.md`
+- **関連一次情報源**: RFC 8290、`man 8 tc-fq_codel`
+- **関連用語**: CoDel、公平キューイング、qdisc、バッファブロート
+
 ### fsck(file system check)
 
 - **定義**: ファイルシステムの全台帳(inode、ビットマップ、ディレクトリ)を
@@ -192,6 +216,18 @@
 - **初出章**: `02_process_kernel/05_signals_ipc.md`
 - **関連一次情報源**: `man 2 futex`
 - **関連用語**: セマフォ、スレッド、システムコール
+
+### HTB(Hierarchical Token Bucket)
+
+- **定義**: トークンバケットをクラスの木に組み上げたクラスフル qdisc。
+  クラスごとに rate(混雑時も使える保証帯域)と ceil(親に余りが
+  あるとき借りられる天井)を持ち、「保証+貸し借り」で全体帯域を
+  分配する——nice / weight による CPU 時間の重み付き分配の帯域版。
+  filter に一致しないパケットは `default` 指定がないとどのクラスにも
+  入らず素通しになる点が運用上の急所
+- **初出章**: `04_linux_network_stack/04_qdisc_traffic_control.md`
+- **関連一次情報源**: `man 8 tc-htb`
+- **関連用語**: トークンバケット、qdisc、シェーピング / ポリシング
 
 ### initramfs(initial RAM filesystem)
 
@@ -448,6 +484,21 @@
 - **初出章**: `01_intro/01_server_os_kernel_overview.md`
 - **関連用語**: カーネル、ユーザーランド、ディストリビューション
 
+### qdisc(queueing discipline / キューイング規律)
+
+- **定義**: IP 層とドライバの間に挟まる、NIC ごとの送信待ち行列の
+  規律。カーネル本体との契約は enqueue(預かれ)と dequeue(1つ
+  よこせ)だけで、その間に並べ替える・遅らせる・捨てるかは実装の
+  自由——CPU スケジューラと同じ「機構と方針の分離」のパケット版。
+  内部にクラスの木を持つクラスフル(htb 等)と持たないクラスレス
+  (fq_codel、tbf、netem 等)に大別され、方針の設定は tc コマンドで
+  行う。詰まらない仮想デバイス(veth、lo)の既定は行列を持たない
+  noqueue
+- **初出章**: `04_linux_network_stack/04_qdisc_traffic_control.md`
+  (送信の道のりでの先出しは `04_linux_network_stack/01_socket_api.md`)
+- **関連一次情報源**: `man 8 tc`、Linuxカーネルソース(net/sched/)
+- **関連用語**: tc、fq_codel、HTB、公平キューイング、softirq
+
 ### RAID(Redundant Array of Independent Disks)
 
 - **定義**: 複数のディスクを束ねて1つのブロックデバイスに見せ、冗長性
@@ -537,6 +588,17 @@
 - **初出章**: `02_process_kernel/01_process_thread_basics.md`
 - **関連一次情報源**: Linuxカーネルソース(include/linux/sched.h)
 - **関連用語**: プロセス、スレッド、PID
+
+### tc(traffic control)
+
+- **定義**: qdisc・クラス・filter を設定するユーザーランドのコマンド
+  (iproute2 に含まれる)。カーネル側の機構(net/sched/)に対する
+  方針の記述役で、`tc qdisc add / replace / del`、`tc -s qdisc show`
+  (統計: backlog / drops / overlimits)が基本操作。実験用の netem
+  (遅延・損失の注入)もこの体系の qdisc の1つ
+- **初出章**: `04_linux_network_stack/04_qdisc_traffic_control.md`
+- **関連一次情報源**: `man 8 tc`、`man 8 tc-netem`
+- **関連用語**: qdisc、HTB、fq_codel
 
 ### TCP(Transmission Control Protocol)
 
@@ -901,6 +963,19 @@
 - **関連一次情報源**: `man 7 shm_overview`、`man 7 sysvipc`
 - **関連用語**: IPC、ページテーブル、mmap、セマフォ
 
+### 公平キューイング(fair queueing)
+
+- **定義**: フロー(おおむね4つ組)ごとに行列を分け、行列の間を
+  ラウンドロビンで巡回して送信機会を配る方式。1巡あたり quantum
+  バイト(ほぼ MTU 1個分)ずつ取り出す DRR(Deficit Round Robin)に
+  より、パケット数ではなくバイト量で公平を測る。大食いのフローの
+  遅延・損失はそのフロー自身に閉じ、明示的な優先度設定なしに対話
+  フローが守られる。CPU スケジューラの重み付き公平分配と同族で、
+  EEVDF の原論文もこの系譜に属する
+- **初出章**: `04_linux_network_stack/04_qdisc_traffic_control.md`
+- **関連一次情報源**: RFC 8290、Stoica & Abdel-Wahab (1995)
+- **関連用語**: fq_codel、qdisc、EEVDF
+
 ### コネクション追跡(connection tracking / conntrack)
 
 - **定義**: netfilter のフック(prerouting と output)で全パケットを
@@ -1020,6 +1095,18 @@
   仕組みの詳細は `01_intro/02_shell_and_commands.md` で扱う
 - **初出章**: `01_intro/01_server_os_kernel_overview.md`
 - **関連用語**: カーネル、ユーザーランド
+
+### シェーピング / ポリシング(shaping / policing)
+
+- **定義**: 帯域制限の2つの流儀。シェーピング(整形)は超過分を
+  行列で**待たせて**送信を平滑化する方式で、行列を必要とするため
+  送信(egress)側でしかできない。ポリシング(取り締まり)は超過分を
+  待たせず**捨てる**方式で、受信(ingress)側でも使え、TCP の損失を
+  合図とした間接的な減速を促す。受信済みのパケットは回線帯域を消費
+  済みであるため、受信側の制御は本質的にこの間接手段に限られる
+- **初出章**: `04_linux_network_stack/04_qdisc_traffic_control.md`
+- **関連一次情報源**: `man 8 tc-tbf`、`man 8 tc-police`
+- **関連用語**: トークンバケット、qdisc、HTB
 
 ### ジャーナリング(journaling)
 
@@ -1263,6 +1350,18 @@
 - **初出章**: `03_filesystem_storage/02_ext4_xfs_journaling.md`
 - **関連用語**: ジャーナリング、チェックポイント、クラッシュ整合性
 
+### トークンバケット(token bucket)
+
+- **定義**: 帯域制限の標準原理。バケツにトークンが一定レート(rate)で
+  補充され、深さ(burst)を超えた分はあふれる。パケットの送信には
+  バイト数分のトークンが必要で、足りなければ貯まるまで待つ。長期の
+  平均速度は rate を超えられない一方、静穏期に貯めた分だけ瞬間の
+  バーストは許される——「平均は厳格に、瞬間は寛容に」。クラスレスな
+  実装が tbf、階層化したものが HTB
+- **初出章**: `04_linux_network_stack/04_qdisc_traffic_control.md`
+- **関連一次情報源**: `man 8 tc-tbf`
+- **関連用語**: HTB、シェーピング / ポリシング、qdisc
+
 ### 特権レベル(privilege level / ring)
 
 - **定義**: CPU が実行中のコードに与える権限の段階。x86-64 では ring 0〜3 の
@@ -1405,6 +1504,20 @@
 - **初出章**: `04_linux_network_stack/01_socket_api.md`
 - **関連一次情報源**: `man 2 listen`、`man 7 tcp`
 - **関連用語**: ソケット、TCP
+
+### バッファブロート(bufferbloat)
+
+- **定義**: 深すぎる送信バッファが引き起こす恒常的な遅延の膨張。
+  TCP は損失を「回線が一杯」の合図として速度を調整するため、
+  バッファが深いと損失がなかなか起きず、行列は満杯近くで安定し、
+  スループットは増えないまま全パケットが満杯の行列を通過するように
+  なる(例: txqueuelen 1000 × 1500 バイトは 10 Mbps 回線で 1.2 秒の
+  遅延)。2010年代に Gettys らが名付けて問題提起し、CoDel / fq_codel
+  という解が生まれた
+- **初出章**: `04_linux_network_stack/04_qdisc_traffic_control.md`
+- **関連一次情報源**: Gettys & Nichols, "Bufferbloat: Dark Buffers in
+  the Internet"(CACM 2012)、RFC 8289
+- **関連用語**: CoDel、fq_codel、qdisc、TCP
 
 ### パリティ(parity)
 
