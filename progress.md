@@ -10,9 +10,9 @@
 
 ## 現在の状態
 
-- 完了ステップ: Step 0〜14(分野01・分野02完了、分野03は4章まで完了)
-- 次のステップ: Step 15 `03_filesystem_storage/05_network_storage.md`
-  (NFS/iSCSI基礎)から着手する
+- 完了ステップ: Step 0〜15(分野01・分野02・分野03完了)
+- 次のステップ: Step 16 `04_linux_network_stack/01_socket_api.md`
+  (ソケットAPI、システムコールからパケットまで)から着手する
 
 ---
 
@@ -387,3 +387,32 @@
   要確認。ESP が素のパーティションである必要の記述は UEFI 仕様ベースの
   一般論として記載。
 - 次のステップ: Step 15 `03_filesystem_storage/05_network_storage.md`
+
+## Step 15: `03_filesystem_storage/05_network_storage.md` (完了日: 2026-07-19)
+
+- 完了内容: 分野03の最終章。章の軸を「どの層でネットワークを挟むかが、
+  共有できるものと整合性の責任の在り処を決める」に設定。NFS(ファイルの層/
+  NAS)と iSCSI(ブロックの層/SAN)の対比表、RPC とファイルハンドル
+  (名前と inode の分離の再演)、v3 ステートレス→v4 リースの設計転換、
+  close-to-open 整合性と属性キャッシュ、UNSTABLE WRITE/COMMIT と verifier、
+  hard/soft と D 状態(分野02のロードアベレージ伏線回収)、silly rename
+  (.nfsXXXX)、SCSI→iSCSI(イニシエータ/ターゲット/IQN/LUN)、
+  単一ホスト用 FS の LUN 二重マウント破損の理由(調停者の不在)、LIO、
+  dm-multipath(前章の「翻訳表」の型で経路を吸収)を執筆。
+- 決定事項: (1) glossaryへ登録: close-to-open整合性、iSCSI、LUN、
+  NAS / SAN、NFS、RPC、イニシエータ / ターゲット、ファイルハンドル、
+  マルチパス。(2) TCP/IP 自体の詳細は network-guide、ソケット内部は
+  分野04(Step 16)に委ねると章内で明示(橋渡しの予告)。(3) クラスタ
+  ファイルシステム(GFS2/OCFS2)と分散ロックは言及のみで分野08に委譲。
+  fstab の `_netdev` と起動順序の話は分野06に委譲。(4) FC / NVMe-oF は
+  「ブロックの層で切る」仲間としての言及のみ。pNFS も言及のみ。
+- 未解決・要検証事項: 属性キャッシュ既定(acregmin=3s〜acregmax=60s、
+  acdirmin=30s)は man 5 nfs(6.x系)に基づく——現行 nfs-utils で要確認。
+  NFS の TASK_KILLABLE 化(2.6.25、intr/nointr の無効化)の記述は本文では
+  版を出さず「現代のカーネルでは」とした。iscsiadm / lsblk / findmnt /
+  exportfs の出力形式は Ubuntu 26.04 実機で要検証。Ubuntu 26.04 の
+  nfs-kernel-server 既定エクスポートオプション(sync/root_squash)と
+  マウント既定(vers=4.2 か)も実機で要確認。silly rename が NFSv4 でも
+  実装上使われ続けている点は簡略化して記述(v4 はデリゲーションとの
+  関係が複雑なため深追い回避)。
+- 次のステップ: Step 16 `04_linux_network_stack/01_socket_api.md`

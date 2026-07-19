@@ -52,6 +52,17 @@
 - **関連一次情報源**: カーネルドキュメント(Documentation/scheduler/sched-design-CFS.rst)
 - **関連用語**: EEVDF、vruntime、スケジューラ、nice値
 
+### close-to-open整合性(close-to-open consistency)
+
+- **定義**: NFS が提供するキャッシュ整合性の約束。「クライアント A が
+  close した後にクライアント B が open すれば、B は A の書き込みを
+  すべて見る」。close 時のダーティページのフラッシュと、open 時の
+  サーバーへの属性検証(キャッシュが古ければ破棄)の組で実現される。
+  open〜close の間の同時アクセスについては何も保証しない
+- **初出章**: `03_filesystem_storage/05_network_storage.md`
+- **関連一次情報源**: `man 5 nfs`(DATA AND METADATA COHERENCE)
+- **関連用語**: NFS、ページキャッシュ、ダーティ
+
 ### dentry(directory entry / ディレクトリエントリ)
 
 - **定義**: パス名の1成分、すなわち「この名前はこの inode を指す」という
@@ -202,6 +213,18 @@
   POSIX(IEEE Std 1003.1)
 - **関連用語**: パイプ、共有メモリ、UNIXドメインソケット、シグナル
 
+### iSCSI(Internet Small Computer System Interface)
+
+- **定義**: ディスクとの会話の標準語である SCSI コマンドを TCP に載せて
+  ネットワークへ流し、遠隔のブロックデバイスをローカルディスクと同じ顔
+  (/dev/sdX)で使えるようにするプロトコル。依頼側をイニシエータ、
+  貸す側をターゲットと呼ぶ。サーバーはブロックを貸すだけで中身の
+  ファイルシステムを関知しないため、台帳の管理と整合性の責任は
+  クライアント側にある(SAN の代表方式)
+- **初出章**: `03_filesystem_storage/05_network_storage.md`
+- **関連一次情報源**: RFC 7143、T10 規格群(SAM / SBC)
+- **関連用語**: イニシエータ / ターゲット、LUN、ブロックデバイス、NAS / SAN
+
 ### jbd2(Journaling Block Device 2)
 
 - **定義**: ext4 のジャーナリングを担う、カーネル内の独立した層
@@ -212,6 +235,17 @@
 - **関連一次情報源**: カーネルドキュメント
   (Documentation/filesystems/journalling.rst)
 - **関連用語**: ext4、ジャーナリング、トランザクション、チェックポイント
+
+### LUN(Logical Unit Number / 論理ユニット)
+
+- **定義**: SCSI / iSCSI のターゲットが貸し出す論理ディスク1つ分の単位
+  (およびその番号)。イニシエータがログインすると、LUN がクライアント側に
+  新しいブロックデバイスとして現れる。裏の実体(バックストア)には
+  ブロックデバイスやファイルを充てられる。単一ホスト用ファイルシステムの
+  載った LUN を複数ホストから同時に mount してはならない
+- **初出章**: `03_filesystem_storage/05_network_storage.md`
+- **関連一次情報源**: RFC 7143、`man 8 targetcli`
+- **関連用語**: iSCSI、イニシエータ / ターゲット、ブロックデバイス
 
 ### LVM(Logical Volume Manager / 論理ボリュームマネージャ)
 
@@ -257,6 +291,31 @@
   キャッシュされる
 - **初出章**: `02_process_kernel/03_virtual_memory.md`
 - **関連用語**: ページテーブル、TLB、仮想メモリ
+
+### NAS / SAN(Network Attached Storage / Storage Area Network)
+
+- **定義**: ネットワークストレージの2大分類。NAS はファイルの層で切って
+  共有する構成(代表は NFS。台帳はサーバー側にあり、複数クライアントの
+  共有をサーバーが調停する)、SAN はブロックの層で切って貸し出す構成
+  (代表は iSCSI / Fibre Channel。クライアントにはブロックデバイスが
+  見え、台帳の管理はクライアント側)。どの層でネットワークを挟むかが、
+  共有の可否と整合性の責任の在り処を決める
+- **初出章**: `03_filesystem_storage/05_network_storage.md`
+- **関連用語**: NFS、iSCSI、VFS、ブロックデバイス
+
+### NFS(Network File System)
+
+- **定義**: ファイル操作の依頼(LOOKUP / GETATTR / READ / WRITE 等)を
+  RPC でサーバーへ送る分散ファイルシステム。ファイルの指定にはパス名で
+  なく不透明なファイルハンドルを使う。v3(RFC 1813)まではサーバーが
+  クライアントの状態を覚えないステートレス設計、v4(RFC 7530 / 8881)は
+  OPEN / CLOSE とリースを持つステートフル設計。キャッシュの整合性は
+  close-to-open 整合性として提供される(NAS の代表方式)
+- **初出章**: `03_filesystem_storage/05_network_storage.md`
+  (D 状態の文脈での先出しは `02_process_kernel/04_scheduler.md`)
+- **関連一次情報源**: RFC 1813、RFC 7530、RFC 8881、`man 5 nfs`、
+  `man 5 exports`
+- **関連用語**: RPC、ファイルハンドル、close-to-open整合性、VFS、NAS / SAN
 
 ### nice値(nice value)
 
@@ -338,6 +397,17 @@
   「スーパーユーザー」「特権ユーザー」は同義として扱う
 - **初出章**: `01_intro/03_filesystem_hierarchy_permissions.md`
 - **関連用語**: UID / GID、パーミッション
+
+### RPC(Remote Procedure Call / 遠隔手続き呼び出し)
+
+- **定義**: 「手続き番号と引数を決まった形式に詰めて送ると、相手がその
+  手続きを実行して結果を返す」という、関数呼び出しの形をした通信の
+  枠組み。NFS の土台は ONC RPC(SUNRPC とも。データ表現は XDR)で、
+  応答がなければ再送する。NFSv3 以前は rpcbind 等の補助プロトコルを
+  必要としたが、NFSv4 は TCP ポート 2049 番に一本化された
+- **初出章**: `03_filesystem_storage/05_network_storage.md`
+- **関連一次情報源**: RFC 5531(ONC RPC)、RFC 4506(XDR)
+- **関連用語**: NFS、システムコール(対比: ローカルの依頼窓口)
 
 ### setuid / setgid / sticky ビット
 
@@ -506,6 +576,17 @@
 - **初出章**: `01_intro/04_package_and_system_layout.md`
 - **関連一次情報源**: Debian Policy Manual
 - **関連用語**: パッケージ、共有ライブラリ、リポジトリ
+
+### イニシエータ / ターゲット(initiator / target)
+
+- **定義**: iSCSI(および SCSI 一般)の2つの役割。イニシエータは
+  コマンドを発行して依頼する側(クライアント。Linux では open-iscsi)、
+  ターゲットはブロックを貸して依頼に応える側(サーバー。Linux では
+  カーネル内実装の LIO)。双方は IQN(iqn.yyyy-mm.逆順ドメイン:識別子
+  形式)という名前で識別され、ログインで対応づけられる
+- **初出章**: `03_filesystem_storage/05_network_storage.md`
+- **関連一次情報源**: RFC 7143、カーネルドキュメント(Documentation/target/)
+- **関連用語**: iSCSI、LUN、クライアント、サーバー
 
 ### エクステント(extent)
 
@@ -1186,6 +1267,17 @@
 - **関連一次情報源**: POSIX(IEEE Std 1003.1)
 - **関連用語**: 標準入出力、リダイレクト、パイプ
 
+### ファイルハンドル(file handle)
+
+- **定義**: NFS でファイルを指定するための、クライアントには不透明な
+  識別子。クライアントは LOOKUP(ディレクトリのハンドル, 名前)で
+  取得し、以後の READ / WRITE はハンドルだけで行う。サーバー側の実装は
+  概ね「ファイルシステム ID + inode 番号 + 世代番号」で、名前と inode の
+  分離という UNIX の設計がプロトコルの語彙に現れたもの
+- **初出章**: `03_filesystem_storage/05_network_storage.md`
+- **関連一次情報源**: RFC 1813、RFC 7530
+- **関連用語**: NFS、inode、パス解決
+
 ### プリエンプション(preemption / 横取り)
 
 - **定義**: 走り続けたいタスクから、カーネルが強制的に CPU を取り上げること
@@ -1295,6 +1387,18 @@
 - **初出章**: `01_intro/03_filesystem_hierarchy_permissions.md`
 - **関連一次情報源**: `man 8 mount`
 - **関連用語**: ルートディレクトリ、FHS
+
+### マルチパス(multipath / dm-multipath)
+
+- **定義**: 同じ LUN への複数の経路(NIC・スイッチの2系統化などで
+  生じる)を1つの仮想ブロックデバイスに束ねる device mapper の
+  ターゲット。個体識別子(WWID)で「別名で見えている同じディスク」を
+  認識し、I/O を経路へ振り分け、経路故障時は multipathd が検知して
+  残りへ切り替える。linear が位置を、raid が台数を吸収したのに続き、
+  経路を吸収する翻訳層
+- **初出章**: `03_filesystem_storage/05_network_storage.md`
+- **関連一次情報源**: `man 8 multipathd`、`man 5 multipath.conf`
+- **関連用語**: device mapper、iSCSI、LUN、ブロックデバイス
 
 ### ミラーリング(mirroring)
 
