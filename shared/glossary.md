@@ -97,6 +97,18 @@
   Stoica & Abdel-Wahab (1995)
 - **関連用語**: CFS、vruntime、nice値、ランキュー、タイムスライス
 
+### epoll
+
+- **定義**: 多数の fd を1回の眠りでまとめて待つための Linux 固有の
+  多重化機構。監視対象の登録(epoll_ctl)と発生の受け取り(epoll_wait)を
+  分離し、イベント発生時のコールバックで ready リストに積む設計により、
+  コストが監視数ではなく発生数に比例する。select / poll(POSIX)の
+  「呼ぶたびに全 fd を検査する」設計の限界(C10K 問題)への回答
+- **初出章**: `04_linux_network_stack/01_socket_api.md`
+  (存在の言及の先出しは `02_process_kernel/05_signals_ipc.md`)
+- **関連一次情報源**: `man 7 epoll`
+- **関連用語**: ソケット、ノンブロッキングI/O、ファイルディスクリプタ
+
 ### errno
 
 - **定義**: 直近のシステムコール等の失敗理由を示すエラー番号が入る、POSIX が
@@ -292,6 +304,17 @@
 - **初出章**: `02_process_kernel/03_virtual_memory.md`
 - **関連用語**: ページテーブル、TLB、仮想メモリ
 
+### NAPI(New API)
+
+- **定義**: ネットワーク受信の負荷適応機構。暇なときは割り込みで即応し、
+  忙しくなると割り込みを止めて softirq の中でリングバッファから
+  まとめてパケットを刈り取る(ポーリング)。パケット1個ごとの割り込みで
+  CPU が食い尽くされる「割り込みの嵐」を防ぐ。刈り尽くすと割り込みを
+  再度有効にして戻る
+- **初出章**: `04_linux_network_stack/01_socket_api.md`
+- **関連一次情報源**: カーネルドキュメント(Documentation/networking/napi.rst)
+- **関連用語**: softirq、割り込み、sk_buff
+
 ### NAS / SAN(Network Attached Storage / Storage Area Network)
 
 - **定義**: ネットワークストレージの2大分類。NAS はファイルの層で切って
@@ -419,6 +442,31 @@
 - **関連一次情報源**: POSIX(IEEE Std 1003.1)、`man 1 chmod`、`man 7 inode`
 - **関連用語**: パーミッション、root
 
+### sk_buff(socket buffer / skb)
+
+- **定義**: カーネル内でパケット1個を一生運ぶ構造体
+  (include/linux/skbuff.h)。ヘッダ分の余白(headroom)を先に確保して
+  データを置き、層を通るたびにポインタ(data)だけを動かしてヘッダの
+  付け外しを表現することで、スタック通過中のデータコピーを避ける。
+  コピーは原則、送信時のユーザー空間→skb と受信時の skb→ユーザー空間の
+  2回だけ
+- **初出章**: `04_linux_network_stack/01_socket_api.md`
+- **関連一次情報源**: Linuxカーネルソース(include/linux/skbuff.h)、
+  カーネルドキュメント(Documentation/networking/)
+- **関連用語**: ソケット、NAPI
+
+### softirq(ソフト割り込み)
+
+- **定義**: 割り込みハンドラ(前半。最小限で即終了)から後回しにされた
+  仕事を、割り込みからの出口や専属カーネルスレッド(ksoftirqd)で
+  処理する仕組み。「割り込みほど緊急ではないが早めにやるべき仕事」の
+  置き場で、ネットワーク受信(NET_RX)・送信(NET_TX)、タイマーなどが
+  代表。CPU ごとの稼働量は `/proc/softirqs` で観察できる
+- **初出章**: `04_linux_network_stack/01_socket_api.md`
+  (「割り込みの後半」としての先出しは `02_process_kernel/02_syscall_context_switch.md`)
+- **関連一次情報源**: Linuxカーネルソース(kernel/softirq.c)
+- **関連用語**: 割り込み、NAPI、カーネルスタック
+
 ### systemd
 
 - **定義**: 現代の主要ディストリビューションがPID 1として採用する、init実装+
@@ -439,6 +487,20 @@
 - **初出章**: `02_process_kernel/01_process_thread_basics.md`
 - **関連一次情報源**: Linuxカーネルソース(include/linux/sched.h)
 - **関連用語**: プロセス、スレッド、PID
+
+### TCP(Transmission Control Protocol)
+
+- **定義**: ストリーム型(SOCK_STREAM)ソケットの標準プロトコル。
+  バイト列を欠け・重複・順序の入れ替わりなく届けることを、確認応答
+  (ACK)と再送、受信ウィンドウによる流量制御、輻輳制御で実現する。
+  接続は3ウェイハンドシェイクで確立され、4つ組(両端の IP と
+  ポート)で識別される。write の回数(メッセージ境界)は保存しない。
+  本書はカーネル実装(ソケット・キュー・状態)の観点のみを扱い、
+  プロトコル自体の詳細(輻輳制御等)は範囲外とする
+- **初出章**: `04_linux_network_stack/01_socket_api.md`
+  (名前の先出しは `03_filesystem_storage/05_network_storage.md`)
+- **関連一次情報源**: RFC 9293、`man 7 tcp`
+- **関連用語**: ソケット、UDP、ポート番号、バックログ
 
 ### TLB(Translation Lookaside Buffer / アドレス変換バッファ)
 
@@ -461,6 +523,17 @@
   (POSIX 共有メモリの文脈での先出しは `02_process_kernel/05_signals_ipc.md`)
 - **関連一次情報源**: カーネルドキュメント(Documentation/filesystems/tmpfs.rst)
 - **関連用語**: 疑似ファイルシステム、ページキャッシュ、共有メモリ
+
+### UDP(User Datagram Protocol)
+
+- **定義**: データグラム型(SOCK_DGRAM)ソケットの標準プロトコル。
+  接続の概念を持たず、1通ずつ独立した手紙(データグラム)を宛先指定で
+  送る(sendto / recvfrom)。メッセージの境界は保存されるが、到達も
+  順序も保証されない。保証が要らない・自前で持つ用途(DNS、NTP、
+  QUIC 等)で使われる
+- **初出章**: `04_linux_network_stack/01_socket_api.md`
+- **関連一次情報源**: RFC 768、`man 7 udp`
+- **関連用語**: TCP、ソケット、ポート番号
 
 ### UID / GID(User ID / Group ID)
 
@@ -989,6 +1062,20 @@
 - **関連一次情報源**: `man 7 sem_overview`、POSIX(IEEE Std 1003.1)
 - **関連用語**: 共有メモリ、futex、IPC
 
+### ソケット(socket)
+
+- **定義**: 通信の端点をファイルディスクリプタとして見せる抽象——
+  「すべてはファイル」のネットワークへの延長。アドレスファミリ
+  (AF_INET / AF_INET6 / AF_UNIX)と型(SOCK_STREAM / SOCK_DGRAM)で
+  性格が決まり、read / write の契約に加えて宛先・接続・流量・失敗を
+  扱う専用のシステムコール群(bind / listen / accept / connect 等)を
+  持つ。fd の裏は struct file → struct socket(VFS 側の顔)→
+  struct sock(プロトコル側の実体)の層構造
+- **初出章**: `04_linux_network_stack/01_socket_api.md`
+  (UNIXドメインソケットとしての先出しは `02_process_kernel/05_signals_ipc.md`)
+- **関連一次情報源**: POSIX(IEEE Std 1003.1)、`man 2 socket`、`man 7 socket`
+- **関連用語**: ファイルディスクリプタ、TCP、UDP、UNIXドメインソケット
+
 ### ゾンビプロセス(zombie process)
 
 - **定義**: 終了済みだが、親プロセスがまだ wait で終了ステータスを回収して
@@ -1113,7 +1200,16 @@
 
 ## な行
 
-(まだ登録された用語はありません)
+### ノンブロッキングI/O(non-blocking I/O)
+
+- **定義**: 読み書きの準備ができていないとき、眠る代わりに即座に
+  エラー(EAGAIN / EWOULDBLOCK)を返すモード(O_NONBLOCK)。
+  「どの fd が準備できたかをまとめて待つ」多重化(select / poll /
+  epoll)と組み合わせ、1つのプロセスで多数の接続を扱う様式の土台と
+  なる。本文の標準表記は「ノンブロッキング」とする
+- **初出章**: `04_linux_network_stack/01_socket_api.md`
+- **関連一次情報源**: `man 2 fcntl`(O_NONBLOCK)、POSIX(IEEE Std 1003.1)
+- **関連用語**: epoll、ソケット、ファイルディスクリプタ
 
 ## は行
 
@@ -1193,6 +1289,18 @@
 - **初出章**: `01_intro/02_shell_and_commands.md`
 - **関連一次情報源**: `man 7 pipe`、`man 2 pipe`
 - **関連用語**: 標準入出力、ファイルディスクリプタ
+
+### バックログ(backlog / accept キュー)
+
+- **定義**: listen 中のソケットで、3ウェイハンドシェイク完了済みの
+  接続がアプリケーションの accept を待つ行列(およびその上限を指定する
+  listen の第2引数。天井は `net.core.somaxconn`)。ハンドシェイク
+  進行中の接続は別の行列(SYN キュー)で待つ。accept が遅れて
+  あふれると、成立したはずの接続が捨てられる。`ss -tln` の LISTEN 行では
+  Recv-Q が現在の待ち数、Send-Q が上限として見える
+- **初出章**: `04_linux_network_stack/01_socket_api.md`
+- **関連一次情報源**: `man 2 listen`、`man 7 tcp`
+- **関連用語**: ソケット、TCP
 
 ### パリティ(parity)
 
@@ -1375,6 +1483,18 @@
 - **初出章**: `02_process_kernel/03_virtual_memory.md`
 - **関連一次情報源**: カーネルソース(mm/memory.c、arch/x86/mm/fault.c)
 - **関連用語**: 例外、VMA、デマンドページング、コピーオンライト
+
+### ポート番号(port number)
+
+- **定義**: 1台のマシンの中の通信の窓口を区別する16ビットの番号
+  (0〜65535)。IP アドレスがマシンを指し、ポート番号がその中の
+  サービスを指す。サーバーはよく知られた番号(22、80 等)に bind して
+  待ち、1024 未満への bind は特権(CAP_NET_BIND_SERVICE)を要する。
+  クライアント側はカーネルが空き番号(エフェメラルポート)を自動で
+  割り当てる
+- **初出章**: `04_linux_network_stack/01_socket_api.md`
+- **関連一次情報源**: `man 7 ip`、`man 5 services`
+- **関連用語**: ソケット、TCP、UDP
 
 ## ま行
 

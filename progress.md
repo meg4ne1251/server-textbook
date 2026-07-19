@@ -10,9 +10,9 @@
 
 ## 現在の状態
 
-- 完了ステップ: Step 0〜15(分野01・分野02・分野03完了)
-- 次のステップ: Step 16 `04_linux_network_stack/01_socket_api.md`
-  (ソケットAPI、システムコールからパケットまで)から着手する
+- 完了ステップ: Step 0〜16(分野01・分野02・分野03完了、分野04着手)
+- 次のステップ: Step 17 `04_linux_network_stack/02_netfilter_nftables.md`
+  (netfilter/nftablesのフック機構)から着手する
 
 ---
 
@@ -416,3 +416,36 @@
   実装上使われ続けている点は簡略化して記述(v4 はデリゲーションとの
   関係が複雑なため深追い回避)。
 - 次のステップ: Step 16 `04_linux_network_stack/01_socket_api.md`
+
+## Step 16: `04_linux_network_stack/01_socket_api.md` (完了日: 2026-07-19)
+
+- 完了内容: 分野04の最初の章。「read/write の契約は守ったまま、宛先・接続・
+  流量・失敗というファイルになかった4つの事情を専用の道具が扱う」を軸に、
+  ソケット=「すべてはファイル」のネットワーク延長、ファミリ×型(ストリーム
+  の境界非保存=パイプの再演)、bind とポート番号(特権ポート・エフェメラル)、
+  5システムコールと3ウェイハンドシェイク(カーネルが処理、accept は完成品の
+  取り出し、4つ組識別)、read/write の待ち(S状態・流量制御・SIGPIPE 回収)、
+  多重化(C10K、select/poll→epoll、signalfd 合流=Step 10 回収)、
+  struct socket/sock 二層、sk_buff(headroom、コピー2回)、送信の道のり
+  (ルーティング表=network-guide 橋渡し、qdisc=Step 19 予告)、受信の道のり
+  (hardirq 前半→softirq/NAPI=Step 7 の割り込み後半の伏線回収)、
+  accept/SYN キュー、epoll 内部(ready リスト、O(発生数))を執筆。
+- 決定事項: (1) glossaryへ登録: epoll、NAPI、sk_buff、softirq、TCP、UDP、
+  ソケット、ノンブロッキングI/O、バックログ(accept キュー)、ポート番号。
+  (2) network-guide 相互参照の形式を確定し style_guide 2.5 を更新
+  (実例: `../../network-guide/01_fundamentals/02_routing_table_basics.md`。
+  役割分担: network-guide=L2/L3・ルーティング主、本書=カーネル実装主)。
+  (3) TCP/UDP のプロトコル詳細(輻輳制御・再送)は本書の範囲外と glossary
+  にも明記。オフロード(GSO/GRO)は発展の言及のみ。(4) netfilter の検問所は
+  受信経路で1文予告(Step 17)、qdisc は送信経路で予告(Step 19)。
+  SYN cookie / ファイアウォールの詳細は分野07 に委譲。複数キュー NIC
+  (RSS 等)の分散は分野09 と絡めて扱う想定で本文は言及のみ。
+- 未解決・要検証事項: somaxconn 既定 4096(Linux 5.4 以降)は実行例の
+  ss 出力(Send-Q=4096)として記載——Linux 7.0 / Ubuntu 26.04 実機で
+  要検証。エフェメラルポート範囲 32768〜60999、TIME_WAIT 60秒
+  (Linux 固定値)も基準版で要確認。strace -e trace=%network の curl 出力
+  (EINPROGRESS)と /proc/softirqs は実機で要検証。napi.rst のパスは
+  6.x系に基づく——Linux 7.0 で要確認。sk_buff のコピー「原則2回」は
+  sendfile/splice 等のゼロコピー経路を除いた記述(ゼロコピーは深追いせず
+  不掲載)。C10K の初出(1999年頃、Dan Kegel)は年のみ記載。
+- 次のステップ: Step 17 `04_linux_network_stack/02_netfilter_nftables.md`
