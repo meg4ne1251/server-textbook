@@ -225,6 +225,17 @@
   POSIX(IEEE Std 1003.1)
 - **関連用語**: パイプ、共有メモリ、UNIXドメインソケット、シグナル
 
+### iptables
+
+- **定義**: Linux 2.4 以降長く標準だったパケットフィルタリング / NAT の
+  ルール体系とツール。プロトコルごとの分立(ip6tables / arptables /
+  ebtables)、ルールの線形評価、照合条件の追加にカーネル変更を要する
+  構造などの限界から、nftables に世代交代した。現在の Ubuntu / Debian の
+  `iptables` コマンドは nftables バックエンドへの互換層(iptables-nft)
+- **初出章**: `04_linux_network_stack/02_netfilter_nftables.md`
+- **関連一次情報源**: `man 8 iptables`、netfilter プロジェクト(netfilter.org)
+- **関連用語**: nftables、netfilter、ファイアウォール
+
 ### iSCSI(Internet Small Computer System Interface)
 
 - **定義**: ディスクとの会話の標準語である SCSI コマンドを TCP に載せて
@@ -326,6 +337,32 @@
 - **初出章**: `03_filesystem_storage/05_network_storage.md`
 - **関連用語**: NFS、iSCSI、VFS、ブロックデバイス
 
+### NAT(Network Address Translation / ネットワークアドレス変換)
+
+- **定義**: パケットの宛先や送信元のアドレス・ポートを、カーネル通過の
+  途中で書き換える機構。宛先の書き換え(DNAT)はルーティング判断前の
+  prerouting、送信元の書き換え(SNAT / masquerade)は判断後の
+  postrouting で行う。Linux の実装はコネクション追跡の上に載っており、
+  ルールの評価はフローの最初の1パケットだけ、以後と逆方向は台帳
+  (conntrack エントリ)に従って自動で書き換えられる。アドレス設計上の
+  意味・使い方は network-guide が主
+- **初出章**: `04_linux_network_stack/02_netfilter_nftables.md`
+- **関連一次情報源**: netfilter プロジェクト(netfilter.org)、`man 8 nft`
+- **関連用語**: netfilter、コネクション追跡、nftables
+
+### netfilter
+
+- **定義**: Linux ネットワークスタックの要所5箇所(prerouting / input /
+  forward / output / postrouting)に置かれたフック(検問所)の枠組み。
+  カーネル内の各機能が nf_hook_ops でフックに処理を優先度順に登録し、
+  パケットごとに verdict(ACCEPT / DROP 等)を返す。パケット
+  フィルタリング・NAT・コネクション追跡の共通の土台で、ルール処理
+  エンジン(nftables 等)はこの上に載る
+- **初出章**: `04_linux_network_stack/02_netfilter_nftables.md`
+- **関連一次情報源**: netfilter プロジェクト(netfilter.org)、
+  Linuxカーネルソース(include/linux/netfilter.h)
+- **関連用語**: nftables、コネクション追跡、NAT、sk_buff
+
 ### NFS(Network File System)
 
 - **定義**: ファイル操作の依頼(LOOKUP / GETATTR / READ / WRITE 等)を
@@ -339,6 +376,19 @@
 - **関連一次情報源**: RFC 1813、RFC 7530、RFC 8881、`man 5 nfs`、
   `man 5 exports`
 - **関連用語**: RPC、ファイルハンドル、close-to-open整合性、VFS、NAS / SAN
+
+### nftables
+
+- **定義**: netfilter のフックに載る現行のルール処理エンジン
+  (Linux 3.13 以降)。カーネル側は少数の汎用命令(式)を評価する
+  仮想機械だけを持ち、ルールの意味はユーザー空間の `nft` が命令列に
+  翻訳して送り込む。テーブル・チェーンはすべてユーザー定義(素の状態は
+  空)。inet ファミリによる IPv4/IPv6 の統一、set / map による要素数に
+  よらない照合、トランザクションによる原子的な更新が iptables からの
+  主な改善点
+- **初出章**: `04_linux_network_stack/02_netfilter_nftables.md`
+- **関連一次情報源**: `man 8 nft`、netfilter プロジェクト(netfilter.org)
+- **関連用語**: netfilter、iptables、コネクション追跡、ファイアウォール
 
 ### nice値(nice value)
 
@@ -838,6 +888,21 @@
 - **初出章**: `02_process_kernel/05_signals_ipc.md`
 - **関連一次情報源**: `man 7 shm_overview`、`man 7 sysvipc`
 - **関連用語**: IPC、ページテーブル、mmap、セマフォ
+
+### コネクション追跡(connection tracking / conntrack)
+
+- **定義**: netfilter のフック(prerouting と output)で全パケットを
+  観察し、フロー(4つ組が中心)ごとの状態をハッシュ表の台帳に記録する
+  仕組み。パケットは NEW / ESTABLISHED / RELATED / INVALID に分類され、
+  ステートフルファイアウォール(「確立済みは通す」)と NAT の自動
+  逆変換の土台となる。エントリは方向ごとの2つのタプル(original /
+  reply)を持ち、上限は `net.netfilter.nf_conntrack_max`。ESTABLISHED は
+  「両方向の往来を観測済み」の意味で、TCP の接続状態とは別物
+  (UDP のフローにも付く)
+- **初出章**: `04_linux_network_stack/02_netfilter_nftables.md`
+- **関連一次情報源**: カーネルドキュメント
+  (Documentation/networking/nf_conntrack-sysctl.rst)、`man 8 conntrack`
+- **関連用語**: netfilter、NAT、nftables、TCP
 
 ### コピーオンライト(copy-on-write / CoW)
 
@@ -1354,6 +1419,19 @@
 - **初出章**: `01_intro/04_package_and_system_layout.md`
 - **関連一次情報源**: UEFI Specification(UEFI Forum)、`man 7 boot`
 - **関連用語**: ブートローダ
+
+### ファイアウォール(firewall)
+
+- **定義**: 通過するパケットを規則に基づいて許可・拒否(・書き換え)する
+  仕組みの総称。Linux ではカーネル内の netfilter + nftables が実装の
+  本体で、ufw / firewalld などの管理ツールは最終的に nftables の
+  ルールを書く前端にあたる。DROP は差出人に何も通知せず捨てるため、
+  「refused ではなくタイムアウト」がファイアウォールを疑う合図になる。
+  方針設計・運用は分野07(`07_operations_security/04`)で扱う
+- **初出章**: `04_linux_network_stack/02_netfilter_nftables.md`
+  (言及の先出しは `04_linux_network_stack/01_socket_api.md`)
+- **関連一次情報源**: `man 8 nft`、netfilter プロジェクト(netfilter.org)
+- **関連用語**: netfilter、nftables、NAT
 
 ### ファイルシステム(filesystem)
 

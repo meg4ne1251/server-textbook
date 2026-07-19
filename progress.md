@@ -10,9 +10,9 @@
 
 ## 現在の状態
 
-- 完了ステップ: Step 0〜16(分野01・分野02・分野03完了、分野04着手)
-- 次のステップ: Step 17 `04_linux_network_stack/02_netfilter_nftables.md`
-  (netfilter/nftablesのフック機構)から着手する
+- 完了ステップ: Step 0〜17(分野01・分野02・分野03完了、分野04進行中)
+- 次のステップ: Step 18 `04_linux_network_stack/03_network_namespaces.md`
+  (ネットワークネームスペース)から着手する
 
 ---
 
@@ -449,3 +449,36 @@
   sendfile/splice 等のゼロコピー経路を除いた記述(ゼロコピーは深追いせず
   不掲載)。C10K の初出(1999年頃、Dan Kegel)は年のみ記載。
 - 次のステップ: Step 17 `04_linux_network_stack/02_netfilter_nftables.md`
+
+## Step 17: `04_linux_network_stack/02_netfilter_nftables.md` (完了日: 2026-07-19)
+
+- 完了内容: 章の軸を「共通の道の要所に固定の検問所(フック)を置き、
+  機能は登録する」に設定。5フックとルーティング判断の位置関係(DNAT が
+  prerouting である必然)、verdict(DROP=黙殺)、優先度の列(conntrack
+  -200→dstnat -100→filter 0→srcnat 100)、conntrack の4状態と2タプル
+  (NAT 自動逆変換の正体)、iptables の4限界→nftables の仮想機械設計
+  (式の列、set/map、inet 統一、原子的更新)、SSH 接続1本の通し稽古、
+  実行例(counter の偏り=顔パスの証拠、conntrack -L)、前章の
+  「refused ではなくタイムアウト」の伏線回収を執筆。
+- 決定事項: (1) glossaryへ登録: iptables、NAT、netfilter、nftables、
+  コネクション追跡、ファイアウォール。標準表記:「検問所(フック)」
+  「verdict(評決)」「台帳」(conntrack)、conntrack 状態は
+  NEW / ESTABLISHED / RELATED / INVALID の英大文字。(2) 定型
+  「ルールの精査は最初の1通だけ、2通目からは台帳で顔パス」を導入
+  (フィルタと NAT の両方を貫く)。(3) NAT のプロトコル的意味・
+  アドレス設計は network-guide 主、本書はカーネル機構主と明記。
+  ufw / firewalld・SYN cookie・堅牢化の方針設計は分野07に委譲。
+  ingress / egress フック(netdev ファミリ)は発展の言及のみで
+  Step 19(tc/qdisc)との接点を予告。(4) x_tables 内部・NFQUEUE の
+  詳細・nftables の flowtable(ハードウェアオフロード)は深追いせず
+  不掲載。
+- 未解決・要検証事項: conntrack タイムアウト既定(TCP established
+  5日、UDP 30秒〜数分)は nf_conntrack-sysctl.rst(6.x系)に基づく——
+  Linux 7.0 での既定値は要確認。優先度の数値(-200/-100/0/100)は
+  include/uapi/linux/netfilter_ipv4.h(6.x系)に基づく。nft の
+  counter 出力・conntrack -L の行形式は Ubuntu 26.04 実機で要検証。
+  Ubuntu 26.04 の iptables が iptables-nft である点も実機の
+  iptables -V で要確認。「フックが空なら実質ゼロコスト」は
+  static_key 実装に基づく簡略記述(詳細は本文に出さず)。
+  reject(ICMP エラーの種別選択)の詳細は分野07で必要なら展開。
+- 次のステップ: Step 18 `04_linux_network_stack/03_network_namespaces.md`
