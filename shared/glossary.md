@@ -136,6 +136,19 @@
 - **関連一次情報源**: `man 7 epoll`
 - **関連用語**: ソケット、ノンブロッキングI/O、ファイルディスクリプタ
 
+### EPT / NPT(Extended Page Table / Nested Page Table)
+
+- **定義**: 「ゲスト物理アドレス→ホスト物理アドレス」の翻訳を行う、
+  ハードウェア仮想化支援の第二のページテーブル(Intel が EPT、AMD が
+  NPT)。MMU はゲストのページテーブルと EPT を続けて歩く(二次元
+  ウォーク)ため、ゲストは自分のページテーブルを trap なしで自由に
+  書き換えられる(シャドウページテーブル方式の解消)。代償として
+  TLB ミス時のウォークは最悪20回超のメモリ参照になる
+- **初出章**: `05_virtualization_containers/02_kvm_qemu.md`
+- **関連一次情報源**: Intel SDM(VMX の章)、
+  カーネルソース(arch/x86/kvm/mmu/)
+- **関連用語**: ページテーブル、TLB、KVM、仮想マシン
+
 ### errno
 
 - **定義**: 直近のシステムコール等の失敗理由を示すエラー番号が入る、POSIX が
@@ -309,6 +322,20 @@
 - **関連一次情報源**: カーネルドキュメント
   (Documentation/filesystems/journalling.rst)
 - **関連用語**: ext4、ジャーナリング、トランザクション、チェックポイント
+
+### KVM(Kernel-based Virtual Machine)
+
+- **定義**: Linux カーネル自身をハイパーバイザにするカーネルモジュール
+  (kvm.ko + kvm_intel.ko / kvm_amd.ko。Linux 2.6.20、2007年)。
+  CPU のハードウェア仮想化支援(VT-x / AMD-V)の運転と、EPT による
+  メモリ変換だけを担い、デバイスの演技はユーザーランド(QEMU)に
+  委ねる。インタフェースは `/dev/kvm` への ioctl の3層(システム /
+  VM / vCPU)。vCPU はただのスレッド、ゲスト RAM はただのアノニマス
+  メモリ(VMA)として、既存のスケジューラ・メモリ管理がそのまま適用
+  される
+- **初出章**: `05_virtualization_containers/02_kvm_qemu.md`
+- **関連一次情報源**: カーネルドキュメント(Documentation/virt/kvm/api.rst)
+- **関連用語**: QEMU、ハイパーバイザ、仮想マシン、EPT / NPT、VM exit
 
 ### LUN(Logical Unit Number / 論理ユニット)
 
@@ -528,6 +555,20 @@
 - **関連一次情報源**: `man 8 tc`、Linuxカーネルソース(net/sched/)
 - **関連用語**: tc、fq_codel、HTB、公平キューイング、softirq
 
+### QEMU
+
+- **定義**: 仮想マシンのデバイスモデル(仮想ディスク・NIC 等の演技)を
+  担うユーザーランドのプロセス。単体でも全命令をソフトウェアで解釈する
+  エミュレータ(TCG)として動くが、KVM と組むと CPU 実行をカーネルに
+  委ね、KVM_RUN の戻り(VM exit)で要求されたデバイスの反応だけを
+  演じて再入する。ゲスト RAM は QEMU 自身の mmap 領域で、vCPU は
+  QEMU のスレッド。仮想ディスクのフォーマット qcow2 と `cache=`
+  オプション(フラッシュの翻訳方針)もこの層の管轄
+- **初出章**: `05_virtualization_containers/02_kvm_qemu.md`
+- **関連一次情報源**: QEMU ドキュメント(qemu.org)、
+  カーネルドキュメント(Documentation/virt/kvm/api.rst)
+- **関連用語**: KVM、仮想マシン、virtio、TAPデバイス
+
 ### RAID(Redundant Array of Independent Disks)
 
 - **定義**: 複数のディスクを束ねて1つのブロックデバイスに見せ、冗長性
@@ -606,6 +647,19 @@
 - **初出章**: `01_intro/04_package_and_system_layout.md`
 - **関連一次情報源**: `man 1 systemd`、`man 7 bootup`
 - **関連用語**: PID 1、デーモン
+
+### TAPデバイス(TAP device)
+
+- **定義**: 「片足がカーネル、片足がプロセス」の仮想ネットワーク
+  デバイス。カーネル側からは普通のネットワークデバイスに見え、
+  プロセス側からは fd に見える。プロセスが fd へ write したフレームは
+  カーネル側に受信として現れ、カーネル側からの送信は fd から read
+  できる。QEMU / vhost_net が仮想マシンの virtqueue との橋渡しに使い、
+  veth と同様にブリッジへ挿せる。L3(IP パケット)版は TUN デバイス
+- **初出章**: `05_virtualization_containers/02_kvm_qemu.md`
+- **関連一次情報源**: カーネルドキュメント
+  (Documentation/networking/tuntap.rst)
+- **関連用語**: ブリッジ、veth、virtio、QEMU
 
 ### task_struct(PCB / プロセス制御ブロック)
 
@@ -751,6 +805,50 @@
 - **初出章**: `03_filesystem_storage/01_vfs_basics.md`
 - **関連一次情報源**: カーネルドキュメント(Documentation/filesystems/vfs.rst)
 - **関連用語**: inode、dentry、スーパーブロック、オープンファイル記述
+
+### vhost
+
+- **定義**: virtio デバイスの処理(virtqueue の読み書き)を QEMU を
+  経由せずカーネル内のワーカーで行う最適化(代表は virtio-net 用の
+  vhost_net)。ゲストからの kick は ioeventfd(VM exit を eventfd への
+  通知に変換し、vCPU は即ゲストへ戻る)、ゲストへの割り込みは
+  irqfd(eventfd への write が仮想割り込み注入になる)で結線され、
+  データ経路からユーザーランドが消える
+- **初出章**: `05_virtualization_containers/02_kvm_qemu.md`
+- **関連一次情報源**: カーネルソース(drivers/vhost/)、
+  カーネルドキュメント(Documentation/virt/kvm/api.rst の
+  ioeventfd / irqfd)
+- **関連用語**: virtio、KVM、TAPデバイス、VM exit
+
+### virtio
+
+- **定義**: 準仮想化デバイスの標準仕様(OASIS 標準)。実在ハードの
+  そっくりさんではなく、最初から仮想であることを前提に設計された
+  架空デバイス(virtio-blk / virtio-net 等)をゲストに見せ、専用
+  ドライバと virtqueue(共有メモリ上のディスクリプタテーブル+
+  avail / used リング)で通信する。依頼はリングに積むだけで VM exit
+  せず、「積んだよ」の合図(kick)だけが exit になり、しかも抑制
+  できる——1回の exit でまとめて処理する設計により、完全
+  エミュレーションの「レジスタ操作のたびに exit」を解消する
+- **初出章**: `05_virtualization_containers/02_kvm_qemu.md`
+- **関連一次情報源**: OASIS Virtual I/O Device (VIRTIO) Version 1.x、
+  カーネルソース(drivers/virtio/)
+- **関連用語**: 準仮想化、VM exit、vhost、QEMU
+
+### VM exit / VM entry
+
+- **定義**: ハードウェア仮想化支援(VT-x / AMD-V)における、ゲスト
+  世界(non-root モード)とホスト世界(root モード)の間の遷移。
+  ハイパーバイザが VMCS に登録した事象(特定の特権命令、I/O、EPT
+  フォールト等)が起きると CPU が自動でゲストを中断してホストへ制御を
+  返し(VM exit)、処理後に VMLAUNCH / VMRESUME で戻る(VM entry)。
+  遷移のたびに VMCS でゲスト/ホスト状態が入れ替わる、コンテキスト
+  スイッチのハードウェア版。素のモード切替より重く、VM exit の削減が
+  仮想化性能の中心課題となる
+- **初出章**: `05_virtualization_containers/02_kvm_qemu.md`
+- **関連一次情報源**: Intel SDM(VMX の章)、
+  カーネルドキュメント(Documentation/virt/kvm/api.rst)
+- **関連用語**: モード切替、コンテキストスイッチ、KVM、virtio
 
 ### vruntime(仮想ランタイム / virtual runtime)
 
@@ -916,6 +1014,20 @@
   ビルトインコマンドと対をなす
 - **初出章**: `01_intro/02_shell_and_commands.md`
 - **関連用語**: ビルトインコマンド、PATH、シェル
+
+### 仮想マシン(virtual machine / VM)
+
+- **定義**: ゲストごとに仮想のハードウェア一式(CPU・メモリ・ディスク・
+  NIC)を見せ、その上でゲストに自前のカーネルを丸ごと動かさせる隔離の
+  形態。ハードウェアの層で切るため、別 OS・別カーネルを動かせ、隔離の
+  境界がホストカーネルの外にもう1枚できる(コンテナとの対比)。
+  KVM/QEMU の実装では、ホストから見ればただのプロセス(vCPU =
+  スレッド、ゲスト RAM = mmap 領域)として動く
+- **初出章**: `05_virtualization_containers/02_kvm_qemu.md`
+  (コンテナとの対比の先出しは
+  `05_virtualization_containers/01_cgroups_namespaces.md`)
+- **関連一次情報源**: カーネルドキュメント(Documentation/virt/kvm/api.rst)
+- **関連用語**: ハイパーバイザ、KVM、QEMU、コンテナ
 
 ### 仮想メモリ(virtual memory)
 
@@ -1198,6 +1310,18 @@
 - **初出章**: `01_intro/02_shell_and_commands.md`
 - **関連一次情報源**: POSIX(IEEE Std 1003.1)
 - **関連用語**: シェル、プロセス
+
+### 準仮想化(paravirtualization)
+
+- **定義**: ゲスト側が「相手は仮想環境である」と知っている前提で、
+  仮想化に都合のよいインタフェースを使う方式の総称。歴史的には
+  x86 の仮想化不能命令を回避するためのゲストカーネル改造(初期の
+  Xen)を指したが、ハードウェア支援(VT-x)後の現代では、VM exit を
+  最小化する準仮想化デバイス(virtio)や準仮想化クロック(kvm-clock)
+  として残る。対義は実在ハードを忠実に演じる完全エミュレーション
+- **初出章**: `05_virtualization_containers/02_kvm_qemu.md`
+- **関連一次情報源**: OASIS Virtual I/O Device (VIRTIO) Version 1.x
+- **関連用語**: virtio、VM exit、ハイパーバイザ
 
 ### スーパーブロック(superblock)
 
@@ -1496,6 +1620,19 @@
   (存在の言及は `01_intro/03_filesystem_hierarchy_permissions.md`)
 - **関連一次情報源**: `man 2 link`、POSIX(IEEE Std 1003.1)
 - **関連用語**: inode、シンボリックリンク、dentry
+
+### ハイパーバイザ(hypervisor / VMM)
+
+- **定義**: 仮想マシンを実行するソフトウェア。無害な命令はゲストに
+  直接実行させ、危険な命令・事象だけを横取り(trap)して、そのゲスト
+  専用の仮想ハードウェアへの操作として演じ直す。VMM(Virtual Machine
+  Monitor)とも呼ぶ。古典分類ではハードウェア直上の type 1 と OS 上の
+  type 2 に分かれるが、KVM は「Linux カーネル自身をハイパーバイザに
+  する」設計でこの分類の中間に位置する。本文の標準表記は
+  「ハイパーバイザ」(長音なし)
+- **初出章**: `05_virtualization_containers/02_kvm_qemu.md`
+- **関連一次情報源**: Popek & Goldberg (1974)、Intel SDM(VMX の章)
+- **関連用語**: 仮想マシン、KVM、QEMU、VM exit
 
 ### パーティション(partition)
 

@@ -10,9 +10,9 @@
 
 ## 現在の状態
 
-- 完了ステップ: Step 0〜20(分野01〜04完了、分野05は1/3章)
-- 次のステップ: Step 21 `05_virtualization_containers/02_kvm_qemu.md`
-  (KVM/QEMUによるハードウェア仮想化)から着手する
+- 完了ステップ: Step 0〜21(分野01〜04完了、分野05は2/3章)
+- 次のステップ: Step 22 `05_virtualization_containers/03_container_runtime.md`
+  (コンテナランタイムの仕組み)から着手する
 
 ---
 
@@ -586,3 +586,41 @@
   のみ)は man 7 time_namespaces に基づく。io コントローラの書き戻し帰属の
   実装詳細(wb_blkcg 等)は本文に出さず概念のみとした。
 - 次のステップ: Step 21 `05_virtualization_containers/02_kvm_qemu.md`
+
+## Step 21: `05_virtualization_containers/02_kvm_qemu.md` (完了日: 2026-07-20)
+
+- 完了内容: 章の軸を「無害な命令は直接実行、危険な命令だけ trap して
+  演じ直す/VM はホストから見ればただのプロセス」に設定。
+  Popek & Goldberg (1974) と x86 の欠陥(popf)、VT-x の root/non-root+
+  VM exit/entry+VMCS(Step 7 のモード切替の3つ目の類型として接続)、
+  KVM=Linux 自身をハイパーバイザに(vCPU=スレッドで EEVDF・cgroup が
+  効く=分野02/前章回収、ゲストRAM=VMA でデマンドページング=Step 8
+  回収)、QEMU のデバイスモデル、EPT/NPT の二段翻訳(シャドウ PT の
+  解消、二次元ウォークのコスト)、virtio(virtqueue の3部構成、kick
+  だけ exit、NAPI 思想=Step 16 接続)、vhost/ioeventfd/irqfd、
+  KVM API 3層と KVM_RUN ループ、I/O 1回の sequenceDiagram、steal time
+  (二重スケジューリング)、qcow2 と cache= モード(cache=unsafe=
+  Step 12「印のない日誌」の宿題回収)、tap+ブリッジ(Step 18 の絵に
+  合流、VXLAN は network-guide 参照)を執筆。
+- 決定事項: (1) glossaryへ登録: EPT / NPT、KVM、QEMU、TAPデバイス、
+  vhost、virtio、VM exit / VM entry、仮想マシン、準仮想化、
+  ハイパーバイザ。標準表記:「ハイパーバイザ」(長音なし、ブートローダ
+  と同型)、「VM exit / VM entry」「kick」「デバイスモデル(演技)」。
+  (2) 説明は Intel VT-x を代表に採り AMD-V は同発想の別実装として
+  併記する方針。(3) ライブマイグレーション・KSM・SR-IOV/デバイス
+  パススルー(VFIO)・ネステッド仮想化の内部は深追いせず不掲載
+  (ネステッドはトラブルシューティングでの言及のみ)。libvirt/virsh の
+  管理層は本書では扱わず、次章(ランタイム)とも独立。(4) tap は
+  「veth と同列にブリッジへ挿せるデバイス」として分野04の構成に合流
+  させる整理を採用。TUN(L3版)は glossary 内の言及のみ。
+- 未解決・要検証事項: VM exit 往復コスト「マイクロ秒未満〜数µs」は
+  桁の感覚として記述(CPU 世代依存、厳密値は断定回避)。EPT の
+  二次元ウォーク「最悪20回超」は 4段×4段の一般論(5段有効時は増える。
+  本文では4段前提)。KVM 導入版 2.6.20(2007年)・VT-x 2005年/
+  AMD-V 2006年の年表記は要再確認。QEMU の cache= 既定を writeback と
+  記載——現行 QEMU(virtio-blk)での既定と fdatasync への翻訳の詳細は
+  要確認。ps -T の vCPU スレッド名「CPU 0/KVM」・smaps_rollup の
+  出力形式は Ubuntu 26.04 実機で要検証。kvm-clock の自動選択・
+  clocksource のパスも実機で要確認。qcow2 の内部構造(L1/L2 テーブル、
+  refcount)は深追いせず概念のみとした。
+- 次のステップ: Step 22 `05_virtualization_containers/03_container_runtime.md`
