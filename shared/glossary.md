@@ -52,6 +52,21 @@
 - **関連一次情報源**: カーネルドキュメント(Documentation/scheduler/sched-design-CFS.rst)
 - **関連用語**: EEVDF、vruntime、スケジューラ、nice値
 
+### cgroup(control group / cgroups)
+
+- **定義**: プロセスをグループに束ねて1本の木(階層)に並べ、グループ単位で
+  CPU 時間・メモリ量・I/O 帯域・プロセス数などの「取り分」をコントローラで
+  制限・分配するカーネル機構。インタフェースは疑似ファイルシステム cgroupfs
+  (`/sys/fs/cgroup`)で、グループ作成は mkdir、所属変更・設定はファイルへの
+  write。本書は木が全体で1本の **cgroup v2**(unified hierarchy、Linux 4.5 で
+  正式化)のみを基準とする。相対配分は weight・絶対上限は max の記法に統一
+  され、プロセスは原則として木の葉にだけ置く。ネームスペースと並ぶコンテナの土台
+- **初出章**: `05_virtualization_containers/01_cgroups_namespaces.md`
+  (名前の先出しは `04_linux_network_stack/03_network_namespaces.md`)
+- **関連一次情報源**: カーネルドキュメント
+  (Documentation/admin-guide/cgroup-v2.rst)、`man 7 cgroups`
+- **関連用語**: コントローラ、ネームスペース、コンテナ、systemd
+
 ### close-to-open整合性(close-to-open consistency)
 
 - **定義**: NFS が提供するキャッシュ整合性の約束。「クライアント A が
@@ -475,6 +490,20 @@
 - **関連一次情報源**: `man 7 boot`、`man 1 init`
 - **関連用語**: systemd、デーモン、カーネル
 
+### PIDネームスペース(PID namespace)
+
+- **定義**: プロセス番号の空間を分けるネームスペース。他の種類と異なり
+  入れ子の階層(最大32段)をなし、プロセスは根から自分の属す段までの
+  各段での番号を struct pid の中に同時に持つ(親のネームスペースからは
+  親の段の番号で見える)。各ネームスペースの最初のプロセスはその中の
+  PID 1 として振る舞い、孤児の引き取り・ハンドラ未登録シグナルの遮断・
+  自身の終了で全員 SIGKILL という init の責務と特権をネームスペース内で
+  持つ。unshare では呼び出した本人は移らず、次に fork した子から新しい
+  空間が始まる
+- **初出章**: `05_virtualization_containers/01_cgroups_namespaces.md`
+- **関連一次情報源**: `man 7 pid_namespaces`、`man 2 unshare`
+- **関連用語**: PID、PID 1、ネームスペース、コンテナ
+
 ### OS(Operating System / オペレーティングシステム)
 
 - **定義**: ハードウェア資源を複数のプログラムに配分する「資源管理」と、
@@ -676,6 +705,19 @@
 - **初出章**: `02_process_kernel/05_signals_ipc.md`
 - **関連一次情報源**: `man 7 unix`、POSIX(IEEE Std 1003.1)
 - **関連用語**: IPC、ファイルディスクリプタ、パイプ
+
+### userネームスペース(user namespace)
+
+- **定義**: UID/GID の番号空間を分け、外の番号との対応表
+  (`/proc/<PID>/uid_map` / `gid_map`)を持つネームスペース(Linux 3.8 で
+  完成)。capability の判定はこのネームスペースごとに行われ、作成者は
+  自分の支配範囲に限りフルの capability を持つため、一般ユーザーでも
+  他種のネームスペースを root なしで作れるようになる(rootless コンテナの
+  土台)。他のすべてのネームスペースは、どれか1つの user ネームスペースに
+  所有される
+- **初出章**: `05_virtualization_containers/01_cgroups_namespaces.md`
+- **関連一次情報源**: `man 7 user_namespaces`
+- **関連用語**: UID / GID、root、ネームスペース、コンテナ
 
 ### vDSO(virtual Dynamic Shared Object)
 
@@ -1015,6 +1057,32 @@
 - **関連用語**: モード切替、プリエンプション、task_struct、カーネルスタック
 
 ## さ行
+
+### コンテナ(container)
+
+- **定義**: ネームスペース(見え方の隔離)と cgroup(資源の取り分)を
+  中心に、ルートファイルシステムの差し替え(pivot_root)や capability の
+  削減などを、ユーザーランドのランタイムが決まった組み合わせで束ねたもの。
+  カーネルに「コンテナ」という単一の概念・構造体は存在せず、中身はホストと
+  カーネルを共有するただのプロセス群である。ゲストごとに自前のカーネルを
+  動かす仮想マシンとは「どの層で切るか」が異なる
+- **初出章**: `05_virtualization_containers/01_cgroups_namespaces.md`
+- **関連一次情報源**: `man 7 namespaces`、カーネルドキュメント
+  (Documentation/admin-guide/cgroup-v2.rst)
+- **関連用語**: ネームスペース、cgroup、プロセス、カーネル
+
+### コントローラ(controller)
+
+- **定義**: cgroup の木の各グループに資源の制限・分配を課す、資源種別ごとの
+  モジュール(cpu / memory / io / pids / cpuset 等)。制限の実行は
+  カーネルの既存機構(スケジューラ、メモリ回収と OOM killer 等)が
+  グループ単位の会計に基づいて行う。v2 では各グループの
+  `cgroup.subtree_control` への書き込みにより、木の上から子グループへ
+  使う分だけ有効化して配る
+- **初出章**: `05_virtualization_containers/01_cgroups_namespaces.md`
+- **関連一次情報源**: カーネルドキュメント
+  (Documentation/admin-guide/cgroup-v2.rst)
+- **関連用語**: cgroup、スケジューラ、OOM killer
 
 ### サーバー(server)
 
@@ -1750,6 +1818,21 @@
 - **初出章**: `01_intro/03_filesystem_hierarchy_permissions.md`
 - **関連一次情報源**: `man 8 mount`
 - **関連用語**: ルートディレクトリ、FHS
+
+### マウントネームスペース(mount namespace)
+
+- **定義**: マウントの一覧(ディレクトリツリーの見え方)を分ける
+  ネームスペース(Linux 2.4.19。ネームスペースの最古参)。作成時点の
+  マウントテーブルの複製から始まり、以後の mount / umount は原則として
+  その中だけの出来事になる。マウント1件ごとの伝播方針
+  (shared / private / slave)により、ネームスペース間でマウントイベントを
+  転送することもできる。コンテナのルートファイルシステム差し替え
+  (pivot_root)の土台
+- **初出章**: `05_virtualization_containers/01_cgroups_namespaces.md`
+  (委譲の予告は `03_filesystem_storage/01_vfs_basics.md`)
+- **関連一次情報源**: `man 7 mount_namespaces`、カーネルドキュメント
+  (Documentation/filesystems/sharedsubtree.rst)
+- **関連用語**: マウント、ネームスペース、パス解決、コンテナ
 
 ### マルチパス(multipath / dm-multipath)
 

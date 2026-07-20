@@ -10,9 +10,9 @@
 
 ## 現在の状態
 
-- 完了ステップ: Step 0〜19(分野01・分野02・分野03・分野04完了)
-- 次のステップ: Step 20 `05_virtualization_containers/01_cgroups_namespaces.md`
-  (cgroups/namespacesの理論)から着手する
+- 完了ステップ: Step 0〜20(分野01〜04完了、分野05は1/3章)
+- 次のステップ: Step 21 `05_virtualization_containers/02_kvm_qemu.md`
+  (KVM/QEMUによるハードウェア仮想化)から着手する
 
 ---
 
@@ -549,3 +549,40 @@
   断定を避け「会計が粗くなる」の表現にとどめた。netem/tbf 実行例の
   数値は例示であり実機で要検証。
 - 次のステップ: Step 20 `05_virtualization_containers/01_cgroups_namespaces.md`
+
+## Step 20: `05_virtualization_containers/01_cgroups_namespaces.md` (完了日: 2026-07-20)
+
+- 完了内容: 分野05の最初の章。章の軸を「カーネルに『コンテナ』という概念はない
+  ——見えてしまう干渉を遮るネームスペースと、奪ってしまう干渉を遮る cgroups の
+  編成に付けた名前」に設定。ネームスペース総論(8種の表と導入版、共通設計=
+  nsproxy/fork継承/clone・unshare・setns/procの名札/参照カウント、Step 18 の
+  一般化)、PID ns(入れ子・struct pid の多層番号・ns 内 PID 1 の責務と特権・
+  unshare は本人を移さない)、mount ns(伝播方針、pivot_root 予告)、
+  UTS/IPC/time、user ns(uid_map、capability はネームスペースごと、rootless の
+  土台)、cgroup v1→v2(統一階層の動機=コントローラ間連携)、v2 の規則
+  (葉にプロセス、subtree_control、weight/max 二本柱)、css_set/css、
+  cpu コントローラ=EEVDF のグループスケジューリング(Step 9 伏線回収、
+  cpu.weight=nice の一般化)、memory(記帳・max/high/low・グループ限定 OOM=
+  Step 8 回収、ページキャッシュ込み)、pids/io(ライトバック帰属=v2 の動機)、
+  コンテナ組み立て5手順(veth+qdisc=Step 18/19 回収)、実行例(systemd-run
+  MemoryMax で 137、unshare -r -f -p --mount-proc)を執筆。
+- 決定事項: (1) glossaryへ登録: cgroup、コンテナ、コントローラ、
+  PIDネームスペース、userネームスペース、マウントネームスペース。
+  (2) cgroups は v2 のみを基準とし、v1 は「古い資料の読み替え」として
+  トラブルシューティングでのみ扱うと確定。標準表記:「コントローラ」
+  「記帳(charge)」「取り分」(weight=混雑時の比率/max=絶対の天井の
+  二本柱を、HTB の rate/ceil・nice と並ぶ反復の型として明示)。
+  (3) capability・seccomp の詳細は分野07、pivot_root の手順とランタイムの
+  実装は Step 22、systemd のスライス構造は分野06、PSI は分野09 に委譲。
+  (4) mount 伝播(shared/private/slave)は位置づけの理解にとどめ深追いしない。
+  仮想マシンとの対比(切る層の違い)は Step 21 の導入への橋とした。
+- 未解決・要検証事項: Ubuntu 26.04 の非特権 user ns の AppArmor 制限
+  (apparmor_restrict_unprivileged_userns 相当)の既定は要検証(本文にも
+  注記済み)。cpu.max 既定 period 100000µs・cpu.weight 範囲 1〜10000 既定
+  100・PID ns 最大32段は 6.x 系文書に基づく——Linux 7.0 で要確認。
+  /proc/self/cgroup の scope 名、systemd-run --user --scope での
+  MemoryMax 挙動(user 権限で委譲されているか)、unshare 実行例の出力は
+  Ubuntu 26.04 実機で要検証。time ns の対象クロック(MONOTONIC/BOOTTIME
+  のみ)は man 7 time_namespaces に基づく。io コントローラの書き戻し帰属の
+  実装詳細(wb_blkcg 等)は本文に出さず概念のみとした。
+- 次のステップ: Step 21 `05_virtualization_containers/02_kvm_qemu.md`
